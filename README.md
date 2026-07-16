@@ -37,3 +37,19 @@ is high.
   censoring asymmetry is real: floor → over edge, no symmetric under edge.
 
 Run instructions are in each version's README.
+
+## Data dependency
+
+Scripts read CFBD data from a **sibling checkout of `cfb-site`**
+(`../cfb-site/data/raw/lines_{season}.json` etc., resolved relative to this
+repo's location). Keep both repos side by side, e.g.:
+
+```
+dev/
+├── cfb-site/       # data lives here (data/raw/, data/processed/)
+└── paper_models/   # this repo
+```
+
+Populate the data with `python -m cfb_system_maker scrape --season ...` from
+`cfb-site` first. `v1/run_on_project_data.py` also accepts an explicit `--csv`
+path if your layout differs.

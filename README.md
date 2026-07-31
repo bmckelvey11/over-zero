@@ -27,6 +27,10 @@ betting playbook (filters, pricing, sizing, stop rules). Score a game with
   the raw total and spread in- and out-of-sample; nothing simpler replaces it.
   v1's single-feature rule is the best line-only strategy.
 
+  **[docs/LEDGER.md](docs/LEDGER.md)** consolidates v2 and v3 into one ledger
+  of things tried — nine hypotheses, what each returned, which are settled and
+  which are still open, so nothing gets re-run by accident.
+
 ## Extensions & sibling models
 
 - **[floor_bias_1h/](floor_bias_1h/)** — Floor Bias extended to **first-half**

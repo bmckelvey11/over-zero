@@ -102,6 +102,9 @@ high-censoring (low-total, lopsided) games. Worth a v3.
 
 ## Net
 
+*(Consolidated with v3 as a single ledger of settled and open questions:
+[docs/LEDGER.md](../docs/LEDGER.md).)*
+
 Both caveats checked, both immaterial on 2013–2025 CFBD data. v1's strategy
 (bet over when expected censoring bias > 1.0) is unchanged: 680 bets, 56.62%,
 probit slope significant at p ≈ 1e−9 with analytic SEs. The independence

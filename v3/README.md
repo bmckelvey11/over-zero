@@ -44,16 +44,24 @@ is fully absorbed by the censoring bias, not vice versa.
 
 ### 3. Out-of-sample 5-fold bake-off (bet over where predicted P > 52.38%)
 
+*(Numbers refreshed 2026-07-31; the previous table predated the 2026-07-30 fix
+that stores fold win counts instead of reconstructing them from a rounded win
+rate. Deterministic at `seed=0`.)*
+
 | spec | bets | win% | unit% | ¼-Kelly | logloss |
 |------|------|------|-------|---------|---------|
-| **v1: biasTotals** | 1053 | **55.46%** | **+5.88%** | **+67.0%** | **0.6848** |
-| totalsEst only | 16 | 31.25% | −40.3% | −0.5% | 0.7161 |
-| bias + totals | 1100 | 55.36% | +5.69% | +64.4% | 0.6851 |
-| bias + totals + spread | 1241 | 55.36% | +5.68% | +60.9% | 0.6853 |
+| v1: biasTotals | 1089 | 55.56% | +6.06% | **+69.9%** | 0.6843 |
+| totalsEst only | 4 | 25.00% | −52.27% | −0.2% | 0.7241 |
+| bias + totals | 1098 | **56.28%** | **+7.45%** | +66.6% | **0.6837** |
+| bias + totals + spread | 1238 | 55.01% | +5.02% | +62.9% | 0.6853 |
 
-v1's single-feature rule wins on every metric (best win%, best log-loss). Adding
-features doesn't help and slightly dilutes — overfitting, not signal. "totalsEst
-only" almost never clears the hurdle (16 bets) and loses.
+Every spec containing `biasTotals` performs the same to within noise;
+`bias + totals` is nominally best on win% and log-loss, but by 0.0006 of
+log-loss on a shared fold split — the bake-off **cannot distinguish them**.
+What it *does* settle is decisive: adding features to `biasTotals` buys
+nothing, and "totalsEst only" clears the hurdle 4 times in 12,493 games and
+loses money doing it. So v1's single-feature rule is preferred on **parsimony
+at equal performance**, not because it sweeps the table.
 
 ### 4. Incremental pseudo-R²
 
@@ -69,6 +77,9 @@ Decisive: censoring's nonlinearity carries essentially all the predictive power.
 v3 **refutes the "it's just low totals" worry.** `biasTotals` is not a stand-in
 for the total level or the spread — it dominates both, in-sample and out, and
 nothing simpler replaces it. The paper's feature is well-chosen and irreducible.
+
+*(Consolidated with v2 as a single ledger of settled and open questions:
+[docs/LEDGER.md](../docs/LEDGER.md).)*
 
 The v2 puzzle (theory underpredicts the empirical slope) therefore is **not**
 explained by an omitted simple line feature. The residual gap is most likely

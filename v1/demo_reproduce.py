@@ -128,6 +128,13 @@ def main():
               f"{cvfit.tobit_dog.sigma:>6.2f} {cvfit.tobit_fav.sigma:>6.2f} "
               f"{cvfit.probit.const:>+7.3f} {cvfit.probit.slope:>+7.3f}")
 
+    # --- Self-test assertions: fail loudly if the estimator chain regresses --
+    assert abs(fit.tobit_dog.sigma - SIGMA_DOG) < 0.15, fit.tobit_dog.sigma
+    assert abs(fit.tobit_fav.sigma - SIGMA_FAV) < 0.15, fit.tobit_fav.sigma
+    assert pf.slope > 0, pf.slope
+    assert 0.5 < pf.bias_for_hurdle(0.5238) < 2.5, pf.bias_for_hurdle(0.5238)
+    print("\nSELF-TEST OK: sigmas recovered, probit slope positive, hurdle sane.")
+
 
 if __name__ == "__main__":
     main()

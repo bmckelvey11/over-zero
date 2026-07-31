@@ -73,3 +73,49 @@ either (a) approve the $30/month the-odds-api.com spend (accepting the 2023-05+ 
 limit), or (b) approve contacting a sales-gated vendor for a quote, or (c) provide/point to an
 existing 1H line dataset not surfaced by this survey. Per the brief, this ends Phase B1 — no
 B1.2/B1.3/B1.4 work performed.
+
+## 2026-07-31 — B2.1 (team-totals line source survey)
+
+**Attempted:** Survey for real historical college-football **team-total** betting lines (dog
+team-total market, feeding the OVER-on-underdog's-team-total bet in Phase B2). Full details in
+`research/b2_team_totals/SOURCES.md`.
+
+**Blocked:** No source found is both free and permitted to use for team-total lines. All four
+paid vendors are blocked on cost alone (no free tier); team-totals-specific market coverage at
+two of them is additionally unconfirmed either way.
+
+**Evidence:**
+- CFBD raw data already in repo (`lines_2024.json`): reused B1's exhaustive key scan (all 1,523
+  games, all `lines` entries) — only 8 keys exist, all full-game/moneyline
+  (`awayMoneyline, formattedSpread, homeMoneyline, overUnder, overUnderOpen, provider, spread,
+  spreadOpen`). Zero team-total keys.
+- the-odds-api.com: `team_totals`/`alternate_team_totals` exist as generic market keys on the
+  platform, but the dedicated NCAA Football markets page lists only "Moneyline, Spreads,
+  Over/Under, Quarter time and half time odds, player props" — team totals are not named for
+  this sport. Checked both the general markets page and the canonical V4 API guide for a
+  sport-by-sport market matrix — neither exists, so this is **unconfirmed, not ruled out**.
+  Historical data requires a paid plan regardless (no free tier), cheapest $30/month (20K plan),
+  same as B1 — this cost blocker holds independent of the coverage question.
+- Unabated: published market list ("sides, totals, partial games, alternate lines, DFS pick'em
+  lines, player props") omits team totals, but no exhaustive matrix was found either — same
+  unconfirmed status. Price confirmed at $3,000/month (personal tier), a solid blocker on its
+  own.
+- SportsDataIO, OddsJam: both sales-gated, no published price, and team-totals coverage
+  unconfirmed (detailed market/field docs require login or a sales contact).
+- Kaggle: ran a fresh search distinct from B1's (which searched for "spreads") — no dataset
+  containing college-football team-total odds found anywhere. The one NCAAF-odds dataset that
+  exists (`chrisnbell/college-football-spreads`, already disqualified in B1 for single-season
+  coverage and ambiguous license) has no team-total column at all — only full-game spread/total.
+
+**Cheapest paid option found:** the-odds-api.com, 20K Plan, **$30/month** (same figure as B1) —
+recorded as the cheapest reference price among surveyed vendors. Team-totals coverage for NCAAF
+was not confirmed on that platform (or ruled out) without a paid API call or support inquiry,
+neither authorized in this session.
+
+**Recommendation:** This task's rules forbid purchasing without owner approval, and also forbid
+contacting sales-gated vendors without authorization (out of scope). If Phase B2 (dog team-total
+backtest) is to proceed, the owner needs to either (a) approve contacting the-odds-api.com
+support directly to confirm whether `team_totals` will actually return NCAAF data before any
+purchase, (b) approve a sales inquiry to SportsDataIO/OddsJam for a quote and market-coverage
+confirmation, or (c) provide/point to an existing team-total line dataset not surfaced by this
+survey. Per the brief, this ends Phase B2 — no B2.2/B2.3 work performed.

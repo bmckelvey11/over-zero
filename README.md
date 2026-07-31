@@ -5,6 +5,11 @@ gambling"* (SSRN 4197428): the over/under line ignores that team scores are
 left-censored at 0, so the **over** is underpriced when expected censoring bias
 is high.
 
+**Start here: [docs/MODEL_GUIDE.md](docs/MODEL_GUIDE.md)** — the full writeup
+with figures: how the model works, the evidence, which games qualify, and the
+betting playbook (filters, pricing, sizing, stop rules). Score a game with
+`python monitor/score_game.py SPREAD TOTAL`.
+
 ## Versions
 
 - **[v1/](v1/) — Floor Bias model** — frozen reference. Named for the mechanism:

@@ -3,9 +3,11 @@
   python monitor/score_game.py SPREAD TOTAL [SPREAD TOTAL ...]
   python monitor/score_game.py 21 41  30 47  3.5 62.5
 
-Spread sign is ignored (only the favorite's margin matters). Trains the full
-pipeline (Tobit sigmas + probit) on every completed season in the sibling
-cfb-site data, then scores each (spread, total) pair. Betting rules per
+SPREAD is the game point spread (sign ignored -- only the favorite's margin
+matters); TOTAL is the game total, i.e. the standard combined over/under on
+both teams' points (not a team total). Trains the full pipeline (Tobit
+sigmas + probit) on every completed season in the sibling cfb-site data,
+then scores each (game spread, game total) pair. Betting rules per
 docs/MODEL_GUIDE.md: bet the over at bias > 1.0 (strong at > 1.75), at -110
 juice or better, using lines as close to closing as possible.
 """
@@ -68,7 +70,8 @@ def main():
         print(f"  {sp:>7.1f} {total:>6.1f} {float(dog):>7.2f} {b:>6.2f} "
               f"{p*100:>7.2f}%  {verdict}")
     print("\nRules: -110 or better on the over; closing-ish lines; full-game "
-          "totals only.\nSee docs/MODEL_GUIDE.md for the full playbook.")
+          "COMBINED totals only\n(the standard game over/under -- not team "
+          "totals). See docs/MODEL_GUIDE.md.")
 
 
 if __name__ == "__main__":

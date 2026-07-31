@@ -13,9 +13,10 @@ place real bets. All numbers in this guide come from 12,493 real CFBD games,
 
 ## TL;DR
 
-**Bet the OVER on college football full-game totals when the expected
-censoring bias computed from the two closing lines exceeds 1.0 points, at
-−110 juice or better.**
+**Bet the OVER on the college football game total — the standard combined
+over/under on both teams' points — when the expected censoring bias computed
+from the two closing game lines exceeds 1.0 points, at −110 juice or
+better.**
 
 | Filter | Bets (2016–2025, walk-forward) | Win% | Wilson 95% CI | Flat-stake return |
 |---|---|---|---|---|
@@ -26,6 +27,22 @@ Breakeven at −110 is 52.38%. Both filters clear it with the *lower bound* of
 their confidence interval, under the honest protocol (model trained only on
 past seasons). One command scores any game: `python monitor/score_game.py SPREAD TOTAL`.
 
+### Which lines this guide means
+
+Four point-related quantities appear below; two are markets, two are model
+internals. Don't mix them up:
+
+| Term | What it is | Role here |
+|---|---|---|
+| **Game spread** | The standard point spread — the favorite's margin line (e.g. Army −21) | Model input |
+| **Game total** | The standard over/under on **both teams' combined points** (e.g. 41) | Model input **and the market you bet** (over only) |
+| **Implied team points** (`dogPointEst`, `favPointEst`) | Each team's expected score, *derived* from the two game lines: dog = (game total − game spread) / 2 | Internal computed quantity — it is **not** a line you can bet |
+| **Team total** | A *separate* sportsbook market on **one** team's points (e.g. "Navy team total over 13.5") | **Not used and not validated** — a candidate future instrument only (open question 3) |
+
+There is no "team spread" market — *spread* in this guide always means the
+game spread. Every per-team number the model produces is an *implied team
+points* estimate, not a bettable team line.
+
 ---
 
 ## 1. Why the over is systematically underpriced
@@ -34,16 +51,18 @@ The idea comes from Arscott (2022), *"Market efficiency and censoring bias in
 college football gambling"* (SSRN 4197428), replicated and extended by this
 repo.
 
-The spread and the total jointly imply how many points each team is expected
-to score:
+The game spread and the game total jointly imply how many points each team
+is expected to score:
 
 ```
-dogPointEst = (total − spread) / 2          # underdog implied points
-favPointEst = dogPointEst + spread          # favorite implied points
+dogPointEst = (gameTotal − gameSpread) / 2    # underdog implied points
+favPointEst = dogPointEst + gameSpread        # favorite implied points
 ```
 
-Example: favorite by 21 with a total of 41 → underdog implied 10, favorite
-implied 31.
+Example: favorite by 21 with a game total of 41 → underdog implied 10,
+favorite implied 31. These implied team points are derived from the two game
+lines — they are the model's internal estimate of each side's scoring, not
+the sportsbook's team-totals market.
 
 Books set these lines around each team's *latent* expected score — the score
 a team "deserves" given its strength. But an actual score **cannot go below
@@ -65,19 +84,20 @@ implied to score 25+ (right panel above).
 
 Two consequences, both confirmed in this data:
 
-- **Totals**: the biases of the two teams *add*. Realized totals
-  systematically exceed low totals lines → **the over is underpriced** in
-  exactly the games where a team's implied score is near the floor.
-- **Spreads**: the biases *subtract* (favorite bias − underdog bias) and
-  mostly cancel → the spread stays fair. There is no spread edge, and the
-  mirrored "under edge from a scoring ceiling" was tested and does **not**
-  exist ([saturation_bias/](../saturation_bias/) — negative result).
+- **Game totals**: the biases of the two teams *add*. Realized combined
+  scores systematically exceed low game-totals lines → **the over is
+  underpriced** in exactly the games where a team's implied score is near
+  the floor.
+- **Game spreads**: the biases *subtract* (favorite bias − underdog bias)
+  and mostly cancel → the spread stays fair. There is no spread edge, and
+  the mirrored "under edge from a scoring ceiling" was tested and does
+  **not** exist ([saturation_bias/](../saturation_bias/) — negative result).
 
 ## 2. The pipeline (what the code actually does)
 
 | Step | What | Where |
 |---|---|---|
-| 1 | Implied team points from spread + total | `implied_team_points` ([v2/models_v2.py](../v2/models_v2.py)) |
+| 1 | Implied team points from game spread + game total | `implied_team_points` ([v2/models_v2.py](../v2/models_v2.py)) |
 | 2 | Estimate score noise σ per role with a left-censored **Tobit** MLE (handles the pile-up at 0 correctly; OLS would not) | `tobit_left_censored_v2` |
 | 3 | Expected censoring bias per game: `biasTotals = bias(dog) + bias(fav)` | `censoring_bias` |
 | 4 | **Probit** maps bias → P(over wins), fit on realized outcomes | `probit_win_v2` |
@@ -133,13 +153,14 @@ The qualifying region is big spread + low total:
 
 ![Qualifying region](figs/qualify_region.png)
 
-**Rule of thumb: `(total − spread) / 2 ≲ 10.5` → the game qualifies.**
+**Rule of thumb: `(game total − game spread) / 2 ≲ 10.5` → the game
+qualifies.**
 Exact frontier (underdog implied points at which bias crosses each
 threshold): 11.5 → 10.5 as the spread grows from 10 to 30 for bias 1.0;
 about 8.3 → 7.0 for bias 1.75. Worked examples (verify any of these with
 `score_game.py`):
 
-| Spread | Total | Dog implied | Bias | Verdict |
+| Game spread | Game total | Dog implied pts | Bias | Verdict |
 |---|---|---|---|---|
 | 3.5 | 62.5 | 29.50 | 0.02 | pass |
 | 14 | 47.5 | 16.75 | 0.33 | pass |
@@ -161,8 +182,9 @@ in recent years (2013–2017 had thinner CFBD line coverage, hence fewer).
 ### Weekly workflow
 
 1. **As close to kickoff as practical** (the model is validated on
-   closing-type lines), collect the spread and total for the day's games.
-   Skim for candidates with the rule of thumb: `(total − spread)/2 ≲ 10.5`.
+   closing-type lines), collect the game spread and the game total (the
+   combined over/under — not team totals) for the day's games. Skim for
+   candidates with the rule of thumb: `(game total − game spread)/2 ≲ 10.5`.
 2. **Score the candidates** (spread sign doesn't matter):
 
    ```bash
@@ -191,7 +213,7 @@ in recent years (2013–2017 had thinner CFBD line coverage, hence fewer).
 |---|---|---|
 | 1 | **`biasTotals > 1.0`** (treat > 1.75 as high-conviction) | The validated signal. Walk-forward: 56.8% / 64.5% |
 | 2 | **Price −110 or better on the over** | The 52.38% breakeven is priced in; worse juice eats the ~4.5 pp edge fast (table below) |
-| 3 | **Full-game totals only** | 1H overs are theoretically stronger but unvalidated until real 1H lines exist ([floor_bias_1h/](../floor_bias_1h/)); unders are refuted |
+| 3 | **Full-game combined totals only** | The validated market is the game total. Team totals are untested here (open question 3); 1H overs are theoretically stronger but unvalidated until real 1H lines exist ([floor_bias_1h/](../floor_bias_1h/)); unders are refuted |
 | 4 | **Not a pick'em** (spread ≠ 0) | Outside the model's sample definition |
 | 5 | **Line from a major book or consensus** | Validated on consensus and any-major-book lines (consensus-only was *stronger*: 58.2%) |
 | 6 | **Recompute if the line moves** | Bias is a function of the current numbers; a total dropping 3 pts or spread moving 4 changes the verdict |
@@ -213,9 +235,9 @@ fifth of the edge.
 
 ### Getting the best number and price
 
-The two things you shop for are the **total** (the number) and the **juice**
-(the price). They convert into each other at a fixed rate, because the totals
-forecast error has σ ≈ 16.3 points:
+The two things you shop for are the **game total** (the number) and the
+**juice** (the price). They convert into each other at a fixed rate, because
+the game-totals forecast error has σ ≈ 16.3 points:
 
 - **Each 1.0 point of total ≈ 2.45 pp of win probability.** A half-point
   ≈ 1.22 pp.
@@ -324,7 +346,7 @@ Data comes from a sibling `cfb-site` checkout
 
 | | |
 |---|---|
-| Bet | CFB full-game totals, **over only** |
+| Bet | CFB **game totals** (combined over/under, both teams), **over only** — not team totals |
 | Signal | `biasTotals` = expected left-censoring bias implied by spread + total |
 | Threshold | > 1.0 (standard), > 1.75 (strong) |
 | Price | −110 or better (to −120 only if strong) |
@@ -382,11 +404,12 @@ resolve it.
    the biggest upgrade available; odds archives (Unabated, OddsJam,
    SBR-style archives) carry 1H markets.
 3. **Underdog team totals — the purest expression?** The mechanism lives in
-   the *underdog's* score, not the game total. If books post team totals for
-   qualifying dogs (implied ≤ 10.5), the over on the *dog team total* should
-   carry the censoring bias undiluted by the favorite's noise. Needs a team-
-   totals line history; nothing in CFBD. Lower limits, but a sharper
-   instrument.
+   the *underdog's* score, not the combined game total. If books post team
+   totals for qualifying dogs (implied ≤ 10.5), the over on the *dog team
+   total* should carry the censoring bias undiluted by the favorite's noise.
+   Needs a team-totals line history; nothing in CFBD. Lower limits, but a
+   sharper instrument. Until someone runs that backtest, the validated bet
+   remains the combined game total only.
 4. **Do early-week numbers beat the close in qualifying games?** CFBD stores
    one snapshot, so open-to-close drift is unmeasured (see "When to bet",
    §5). If qualifying totals systematically rise toward kickoff, betting

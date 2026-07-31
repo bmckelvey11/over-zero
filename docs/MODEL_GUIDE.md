@@ -37,7 +37,7 @@ internals. Don't mix them up:
 | **Game spread** | The standard point spread — the favorite's margin line (e.g. Army −21) | Model input |
 | **Game total** | The standard over/under on **both teams' combined points** (e.g. 41) | Model input **and the market you bet** (over only) |
 | **Implied team points** (`dogPointEst`, `favPointEst`) | Each team's expected score, *derived* from the two game lines: dog = (game total − game spread) / 2 | Internal computed quantity — it is **not** a line you can bet |
-| **Team total** | A *separate* sportsbook market on **one** team's points (e.g. "Navy team total over 13.5") | **Not used and not validated** — a candidate future instrument only (open question 3) |
+| **Team total** | A *separate* sportsbook market on **one** team's points (e.g. "Navy team total over 13.5") | **Neither an input nor a bet.** Not needed to run the model (§2) and not validated as a market to bet (open question 3) |
 
 There is no "team spread" market — *spread* in this guide always means the
 game spread. Every per-team number the model produces is an *implied team
@@ -110,6 +110,32 @@ fitted "bias that clears breakeven" lands at 0.75, so 1.0 is conservative.
 
 Only the two betting lines go in. No team ratings, no weather, no injuries —
 which is the point: this is mispricing you can compute from the board itself.
+
+### What the model needs as input
+
+**To score a game: two numbers — the game spread and the game total.** Nothing
+else. That is the whole of `python monitor/score_game.py 21 41`.
+
+The per-team values are *derived from those two by arithmetic*, never looked
+up: `dogPointEst = (gameTotal − gameSpread) / 2`. **The model never reads a
+team-totals market, and does not need one.** That is not an incidental
+convenience — it is close to the reason the edge exists. Implied team points
+are a by-product of two other heavily-traded lines, so nobody arbitrages them;
+if a team-totals quote were a required input, the mispricing would likely
+already be priced out of it.
+
+The one genuine per-team requirement is in **training**, and it is scores, not
+lines. The Tobit is fit separately per role — `tobit_left_censored(dog_points,
+dogPointEst)` and the same for the favorite — so estimating σ_dog = 11.03 and
+σ_fav = 11.78 needs to know each team scored 17 and 24, not merely that the
+game landed on 41. Those are box scores (free, in every CFBD game record), not
+a betting market. Once σ is fitted, scoring a new game is back to the two
+lines.
+
+| | Needs per-team **lines**? | Needs per-team **scores**? |
+|---|---|---|
+| Training (fit σ and the probit) | No | **Yes** — box scores, `data/raw/games_*.json` |
+| Scoring a game to bet | No | No — spread and total only |
 
 ## 3. The evidence
 

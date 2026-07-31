@@ -409,6 +409,11 @@ order. Three tracks — they don't block each other.
 
 ### B. Research, ranked by expected payoff
 
+> Ready-to-execute plan for all five items (written for hand-off to a
+> cheaper/less-context model, with exact code, commands, guardrails, and
+> stop rules):
+> [docs/superpowers/plans/2026-07-30-research-track-b.md](superpowers/plans/2026-07-30-research-track-b.md)
+
 | # | Step | Effort | Resolves |
 |---|---|---|---|
 | 1 | Hunt down historical **1H closing lines** (`game_id,half_spread,half_total`) and run the ready-made backtest: `python floor_bias_1h/run_1h.py --half-lines file.csv` | Data hunt only — the model is already built | Q2: a theoretically ~2.3× stronger edge, whole new market |

@@ -5,6 +5,10 @@ gambling"* (SSRN 4197428): the over/under line ignores that team scores are
 left-censored at 0, so the **over** is underpriced when expected censoring bias
 is high.
 
+**Open work: [TODO.md](TODO.md)** — every outstanding task in one place, from
+the two data purchases that are blocked on an owner decision to the
+highest-value item, which needs neither new data nor money.
+
 **Start here: [docs/MODEL_GUIDE.md](docs/MODEL_GUIDE.md)** — the full writeup
 with figures: how the model works, the evidence, which games qualify, and the
 betting playbook (filters, pricing, sizing, stop rules). Score a game with

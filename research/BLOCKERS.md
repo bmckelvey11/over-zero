@@ -34,3 +34,42 @@ list (Task B4.1, "only if fewer than 4 of the above are available") —
 using it here keeps the analysis within the plan's own fallback ordering.
 FEATURES becomes `["week", "neutralSite", "conferenceGame", "home_dog"]`;
 Bonferroni budget stays at 4 features (p < 0.0125), unchanged.
+
+## 2026-07-31 — B1.1 (1H line source survey)
+
+**Attempted:** Survey for real historical first-half (1H) college football betting lines
+(spread + total) to feed `floor_bias_1h/run_1h.py`. Full details in
+`research/b1_first_half/SOURCES.md`.
+
+**Blocked:** No source found is both free and permitted to use for 1H spread + total lines.
+
+**Evidence:**
+- CFBD raw data already in repo (`../cfb-site/data/raw/lines_2024.json`): scanned all 1,523
+  games' `lines` entries — only 8 keys exist (`awayMoneyline`, `formattedSpread`,
+  `homeMoneyline`, `overUnder`, `overUnderOpen`, `provider`, `spread`, `spreadOpen`), all
+  full-game markets. Zero first-half/period keys.
+- sportsbookreviewsonline.com (free, robots.txt-permitted): the domain has been repurposed as a
+  sportsbook-affiliate content site; its NCAA football archive pages (2007-08 – 2022-23) are
+  HTML tables only (no downloadable file). Table schema is `Date, Rot, VH, Team, 1st, 2nd, 3rd,
+  4th, Final, Open, Close, ML, 2H` — has a **2nd-half** column but **no 1st-half** column at
+  all. Deriving 1H via FG − 2H would be a proxy, not a real posted first-half line.
+- Kaggle `chrisnbell/college-football-spreads`: single season (2021), full-game columns only
+  (`Spread`, `OverUnder`, `OpeningSpread`, etc.), license unstated ("Other, specified in
+  description" but description is empty) — ambiguous license, treated as blocked per this task's
+  rules independent of the missing-1H-column issue.
+- the-odds-api.com: historical odds (any market, including 1H/period markets) require a paid
+  plan — no free tier. Confirmed period markets only exist from 2023-05-03 onward even if paid.
+- SportsDataIO, Unabated, OddsJam: all paid/sales-gated, no free tier for historical odds.
+
+**Cheapest paid option found:** the-odds-api.com, 20K Plan, **$30/month** — includes historical
+odds access, but 1H/period market backfill only reaches back to 2023-05-03 (covers the 2024
+season this model targets; would not cover earlier seasons in a wider backtest). Next-cheapest
+confirmed price: Unabated at $3,000/month. SportsDataIO and OddsJam publish no price
+(sales-gated).
+
+**Recommendation:** This task's rules forbid purchasing without owner approval, which is not
+obtainable in this session. If B1 (first-half lines backtest) is to proceed, the owner needs to
+either (a) approve the $30/month the-odds-api.com spend (accepting the 2023-05+ coverage
+limit), or (b) approve contacting a sales-gated vendor for a quote, or (c) provide/point to an
+existing 1H line dataset not surfaced by this survey. Per the brief, this ends Phase B1 — no
+B1.2/B1.3/B1.4 work performed.

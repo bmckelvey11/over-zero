@@ -39,6 +39,7 @@ from models_v2 import (  # noqa: E402
     implied_team_points,
     kelly_bankroll_roi,
     log_likelihood_ratio,
+    pick_line,
     probit_win_v2,
     tobit_left_censored_v2,
 )
@@ -98,13 +99,9 @@ def load_1h(seasons, raw_dir=RAW_DIR, half_lines_csv=None,
         # game spread/total per id (consensus or first book with both fields).
         game_line = {}
         for x in json.loads(lpath.read_text(encoding="utf-8")):
-            both = [l for l in (x.get("lines") or [])
-                    if l.get("spread") is not None and l.get("overUnder") is not None]
-            if not both:
-                continue
-            line = next((l for l in both
-                         if str(l.get("provider", "")).lower() == "consensus"), both[0])
-            game_line[x["id"]] = (float(line["spread"]), float(line["overUnder"]))
+            picked = pick_line(x)
+            if picked is not None:
+                game_line[x["id"]] = picked
 
         for g in json.loads(gpath.read_text(encoding="utf-8")):
             gid = g.get("id")

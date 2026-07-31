@@ -4,8 +4,6 @@
 """
 
 import argparse
-import json
-from pathlib import Path
 
 import numpy as np
 
@@ -13,37 +11,11 @@ from saturation import (
     fit_probit1,
     implied_team_points,
     kfold_under_strategy,
+    load_from_raw,
     saturation_totals,
     select_ceiling,
     tobit_left_censored_v2,
 )
-
-RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
-
-
-def load_from_raw(seasons, raw_dir=RAW_DIR):
-    se, te, fp, dp = [], [], [], []
-    for season in seasons:
-        path = Path(raw_dir) / f"lines_{season}.json"
-        if not path.exists():
-            print(f"  (no raw file for {season})")
-            continue
-        for g in json.loads(path.read_text(encoding="utf-8")):
-            hp, ap = g.get("homeScore"), g.get("awayScore")
-            if hp is None or ap is None:
-                continue
-            both = [l for l in (g.get("lines") or [])
-                    if l.get("spread") is not None and l.get("overUnder") is not None]
-            if not both:
-                continue
-            line = next((l for l in both
-                         if str(l.get("provider", "")).lower() == "consensus"), both[0])
-            spread, total = float(line["spread"]), float(line["overUnder"])
-            if spread == 0:
-                continue
-            fav, dog = (float(hp), float(ap)) if spread < 0 else (float(ap), float(hp))
-            se.append(abs(spread)); te.append(total); fp.append(fav); dp.append(dog)
-    return np.array(se), np.array(te), np.array(fp), np.array(dp)
 
 
 def main():

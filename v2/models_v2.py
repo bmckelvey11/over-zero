@@ -25,13 +25,76 @@ LL-ratio, Kelly) are reproduced here so v2 is self-contained and v1 stays frozen
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import statsmodels.api as sm
 from scipy import optimize, stats
 
 NORM = stats.norm
+
+
+# ===========================================================================
+# Shared CFBD raw-lines loader (v2/v3/saturation/monitor drivers; v1 keeps
+# its own frozen copy)
+# ===========================================================================
+RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
+
+
+def pick_line(game, provider=None):
+    """Choose one book's (spread, total) for a game: `provider` only if given,
+    else consensus if present, else the first book carrying both lines.
+    Returns None when no qualifying book has both a spread and a total."""
+    both = [l for l in (game.get("lines") or [])
+            if l.get("spread") is not None and l.get("overUnder") is not None]
+    if provider is not None:
+        both = [l for l in both
+                if str(l.get("provider", "")).lower() == provider.lower()]
+    if not both:
+        return None
+    line = next((l for l in both
+                 if str(l.get("provider", "")).lower() == "consensus"), both[0])
+    return float(line["spread"]), float(line["overUnder"])
+
+
+def load_raw_seasons(seasons, raw_dir=RAW_DIR, provider=None):
+    """dict season -> (spread_est, totals_est, fav_pts, dog_pts) from
+    lines_{season}.json. Favorite = negative-spread side (underdog
+    perspective, spread_est > 0); pick'em games dropped."""
+    out = {}
+    for season in seasons:
+        path = Path(raw_dir) / f"lines_{season}.json"
+        if not path.exists():
+            print(f"  (no raw file for {season})")
+            continue
+        se, te, fp, dp = [], [], [], []
+        for g in json.loads(path.read_text(encoding="utf-8")):
+            hp, ap = g.get("homeScore"), g.get("awayScore")
+            if hp is None or ap is None:
+                continue
+            picked = pick_line(g, provider)
+            if picked is None:
+                continue
+            spread, total = picked
+            if spread == 0:
+                continue
+            fav, dog = (float(hp), float(ap)) if spread < 0 else (float(ap), float(hp))
+            se.append(abs(spread)); te.append(total); fp.append(fav); dp.append(dog)
+        if se:
+            out[season] = (np.array(se), np.array(te), np.array(fp), np.array(dp))
+    return out
+
+
+def load_from_raw(seasons, raw_dir=RAW_DIR, provider=None):
+    """Flat pooled arrays across seasons (in the given season order) -- the
+    shape the v2/v3/saturation drivers use."""
+    data = load_raw_seasons(seasons, raw_dir, provider)
+    if not data:
+        return tuple(np.array([]) for _ in range(4))
+    yrs = [y for y in seasons if y in data]
+    return tuple(np.concatenate([data[y][k] for y in yrs]) for k in range(4))
 
 
 # ===========================================================================

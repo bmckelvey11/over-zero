@@ -9,8 +9,7 @@
 """
 
 import argparse
-import json
-from pathlib import Path
+import sys
 
 import numpy as np
 
@@ -19,42 +18,12 @@ from models_v2 import (
     estimate_error_correlation,
     implied_team_points,
     kelly_bankroll_roi,
+    load_raw_seasons,
     log_likelihood_ratio,
     pover_theoretical,
     probit_win_v2,
     tobit_left_censored_v2,
 )
-
-RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
-
-
-def load_from_raw(seasons, raw_dir=RAW_DIR):
-    """Same loader as v1 --raw: per game pick a book with both spread and total.
-    Also returns the season per game (for cluster-robust SEs)."""
-    se, te, fp, dp, ss = [], [], [], [], []
-    for season in seasons:
-        path = Path(raw_dir) / f"lines_{season}.json"
-        if not path.exists():
-            print(f"  (no raw file for {season})")
-            continue
-        for g in json.loads(path.read_text(encoding="utf-8")):
-            hp, ap = g.get("homeScore"), g.get("awayScore")
-            if hp is None or ap is None:
-                continue
-            both = [l for l in (g.get("lines") or [])
-                    if l.get("spread") is not None and l.get("overUnder") is not None]
-            if not both:
-                continue
-            line = next((l for l in both
-                         if str(l.get("provider", "")).lower() == "consensus"), both[0])
-            spread, total = float(line["spread"]), float(line["overUnder"])
-            if spread == 0:
-                continue
-            fav, dog = (float(hp), float(ap)) if spread < 0 else (float(ap), float(hp))
-            se.append(abs(spread)); te.append(total); fp.append(fav); dp.append(dog)
-            ss.append(season)
-    return (np.array(se), np.array(te), np.array(fp), np.array(dp),
-            np.array(ss))
 
 
 def main():
@@ -64,7 +33,12 @@ def main():
     ap.add_argument("--mc", type=int, default=10000, help="MC draws per game")
     args = ap.parse_args()
 
-    se, te, fp, dp, ss = load_from_raw(args.season)
+    data = load_raw_seasons(args.season)
+    if not data:
+        sys.exit("No raw data found.")
+    yrs = [y for y in args.season if y in data]
+    se, te, fp, dp = (np.concatenate([data[y][k] for y in yrs]) for k in range(4))
+    ss = np.concatenate([np.full(data[y][0].size, y) for y in yrs])
     print(f"Loaded {se.size:,} games, seasons {min(args.season)}-{max(args.season)}\n")
 
     dog_est, fav_est = implied_team_points(se, te)

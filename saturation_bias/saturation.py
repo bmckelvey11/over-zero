@@ -47,6 +47,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "v2"))
 from models_v2 import (  # noqa: E402
     implied_team_points,
     kelly_bankroll_roi,
+    load_from_raw,
     log_likelihood_ratio,
     tobit_left_censored_v2,
 )

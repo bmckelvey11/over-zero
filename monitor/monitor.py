@@ -14,7 +14,6 @@ Estimator core imported from ../v2.
 
 from __future__ import annotations
 
-import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,40 +25,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "v2"))
 from models_v2 import (  # noqa: E402
     censoring_bias,
     implied_team_points,
+    load_raw_seasons as load_from_raw,
     probit_win_v2,
     tobit_left_censored_v2,
 )
 
-RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
 HURDLE = 0.5238
-
-
-def load_from_raw(seasons, raw_dir=RAW_DIR):
-    """Return dict season -> (spread_est, totals_est, fav_pts, dog_pts)."""
-    out = {}
-    for season in seasons:
-        path = Path(raw_dir) / f"lines_{season}.json"
-        if not path.exists():
-            continue
-        se, te, fp, dp = [], [], [], []
-        for g in json.loads(path.read_text(encoding="utf-8")):
-            hp, ap = g.get("homeScore"), g.get("awayScore")
-            if hp is None or ap is None:
-                continue
-            both = [l for l in (g.get("lines") or [])
-                    if l.get("spread") is not None and l.get("overUnder") is not None]
-            if not both:
-                continue
-            line = next((l for l in both
-                         if str(l.get("provider", "")).lower() == "consensus"), both[0])
-            spread, total = float(line["spread"]), float(line["overUnder"])
-            if spread == 0:
-                continue
-            fav, dog = (float(hp), float(ap)) if spread < 0 else (float(ap), float(hp))
-            se.append(abs(spread)); te.append(total); fp.append(fav); dp.append(dog)
-        if se:
-            out[season] = (np.array(se), np.array(te), np.array(fp), np.array(dp))
-    return out
 
 
 def _wilson(wins, n, z=1.96):

@@ -36,6 +36,13 @@ is high.
   relationship runs the wrong way, and no OOS under strategy survives. The
   censoring asymmetry is real: floor → over edge, no symmetric under edge.
 
+- **[monitor/](monitor/)** — operational truth tools: the **edge-decay
+  monitor** (per-season and trailing-window probit slope + win% with CIs,
+  trend test — no decay through 2025) and the **walk-forward backtest**
+  (train on seasons ≤ t−1, bet season t: 56.83% over 681 bets, Wilson 95%
+  lower bound above breakeven — the deployable-protocol check behind v1's
+  headline).
+
 Run instructions are in each version's README.
 
 ## Data dependency

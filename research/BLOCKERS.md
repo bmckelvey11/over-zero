@@ -119,3 +119,28 @@ support directly to confirm whether `team_totals` will actually return NCAAF dat
 purchase, (b) approve a sales inquiry to SportsDataIO/OddsJam for a quote and market-coverage
 confirmation, or (c) provide/point to an existing team-total line dataset not surfaced by this
 survey. Per the brief, this ends Phase B2 — no B2.2/B2.3 work performed.
+
+## 2026-07-31 — B3.1 (odds snapshot capture) — plan deviation, owner-approved
+
+**Attempted:** Task B3.1 requires `ODDS_API_KEY` (owner-supplied env var) to run
+`capture_odds.py` against the-odds-api.com's live odds endpoint (free tier, ~26
+req/month). Env var was not set; owner was asked once per protocol.
+
+**Owner decision (2026-07-31):** Do not wait for the API key / a live season of
+capture. Instead, build B3's open-to-close drift analysis (open questions 4 & 5)
+directly from data already on disk: `../cfb-site/data/raw/lines_{season}.json`
+carries per-book `spread`/`spreadOpen` and `overUnder`/`overUnderOpen` fields for
+every game in every already-downloaded season (2013–2025) — this is exactly the
+open-vs-close pair B3's `analyze_drift.py` was designed to compute from live
+snapshots, just already present historically instead of being captured forward.
+
+**Scope change from the plan:** This replaces `capture_odds.py` +
+`analyze_drift.py` (which need the API key and a live season to accumulate
+snapshots) with a new one-shot driver reading the raw files directly. Coverage
+gain: all historical seasons at once instead of one forward season.
+Coverage loss: raw files have no per-book **price** field (only `spread`,
+`spreadOpen`, `overUnder`, `overUnderOpen`) — open question 5 ("do books already
+shade the over past −110") is **not answerable** from this data; only open
+question 4 (does the total drift toward close) can be answered. If juice/price
+data is wanted later, the original API-key-based capture script remains a valid
+fallback — this deviation does not preclude running it once a key is provided.

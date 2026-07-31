@@ -273,7 +273,7 @@ closing-type numbers, which means:
   risk both ways, and early totals carry more non-model uncertainty.
 - **Whether early numbers are systematically better is an open question**
   (CFBD carries one snapshot per game, so open-to-close drift in qualifying
-  games is unmeasured — see §9). Resolve it yourself with your bet log:
+  games is unmeasured — see §10). Resolve it yourself with your bet log:
   record your total vs the closing total. Each point below close ≈ +2.4 pp
   over the validated 56.8%; each point above ≈ −2.4 pp. If your CLV is
   consistently positive early in the week, move earlier; if negative, wait
@@ -381,7 +381,58 @@ Data comes from a sibling `cfb-site` checkout
   negative-expectation for almost everyone; a 4.5 pp edge, if it persists, is
   grindy and volatile. Legality depends on your jurisdiction.
 
-## 9. Open questions
+## 9. Next steps
+
+Open questions (§10) are what we *don't know*; this is what to *do*, in
+order. Three tracks — they don't block each other.
+
+### A. If you're going to bet it (this season)
+
+1. **Dry-run one full Saturday before staking.** Score the whole slate
+   (`score_game.py`), check the qualifying list against the board, and
+   confirm the verdicts and prices look like §4–§5 say they should. Costs
+   nothing, catches setup mistakes.
+2. **Start the bet log on day one.** Columns: date, teams, book, game spread
+   taken, game total taken, price, bias, model P(over), closing game total,
+   closing price, result. This log is not bookkeeping — it is the instrument
+   that resolves open questions 4 (timing/CLV) and 5 (real juice on
+   qualifying overs).
+3. **Ramp sizing.** First ~25–30 bets at half stakes (0.5u) while the log
+   confirms two assumptions: you can actually get ~−110, and your CLV is not
+   systematically negative. Both hold → move to full sizing (§5). Either
+   fails → the realized edge is thinner than backtested; recompute before
+   scaling.
+4. **Close the season loop.** After the season: scrape it into `cfb-site`
+   (`python -m cfb_system_maker scrape --season 2026`), rerun
+   `monitor/run_walkforward.py` and `monitor/run_monitor.py`, and check the
+   stop rules (§5) before betting the next year.
+
+### B. Research, ranked by expected payoff
+
+| # | Step | Effort | Resolves |
+|---|---|---|---|
+| 1 | Hunt down historical **1H closing lines** (`game_id,half_spread,half_total`) and run the ready-made backtest: `python floor_bias_1h/run_1h.py --half-lines file.csv` | Data hunt only — the model is already built | Q2: a theoretically ~2.3× stronger edge, whole new market |
+| 2 | Source a **team-totals** line history and backtest "dog team total over" with the existing pipeline | Small new driver on existing estimators | Q3: the purest instrument for the mechanism |
+| 3 | Capture **multi-snapshot odds** (open / mid-week / close, with prices) for one season of qualifying games | Scraper addition to cfb-site | Q4 (best timing) and Q5 (real juice) at once |
+| 4 | Regress the probit residuals on **weather / pace / style** features already in cfb-site data | Analysis only, data on hand | Q1: why the realized edge is ~2× the pure-censoring prediction |
+| 5 | **Hierarchical team-level σ** (shrunk toward the pooled value) | Modeling work | Q9: sharper borderline bets |
+
+Items 1–3 are data-acquisition problems, not modeling problems — the code
+side is ready or trivial. That's why they rank first.
+
+### C. Engineering conveniences
+
+- **`score_week.py`**: pull the current week's game lines from the CFBD API
+  (cfb-site already has the scraper/auth), score every game, print the
+  qualifying list with verdicts — removes the manual number entry from the
+  weekly workflow.
+- **Bet-log template + CLV summarizer**: a CSV header to standardize track A
+  step 2, plus a 30-line script that reports your average price, average
+  CLV in points, and realized-vs-expected win rate.
+- **Season-maintenance checklist** in [monitor/README.md](../monitor/README.md)
+  so track A step 4 is a copy-paste ritual, not memory.
+
+## 10. Open questions
 
 Ranked roughly by how much each could change the strategy, with what would
 resolve it.

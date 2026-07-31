@@ -6,8 +6,8 @@
 SPREAD is the game point spread (sign ignored -- only the favorite's margin
 matters); TOTAL is the game total, i.e. the standard combined over/under on
 both teams' points (not a team total). Trains the full pipeline (Tobit
-sigmas + probit) on every completed season in the sibling cfb-site data,
-then scores each (game spread, game total) pair. Betting rules per
+sigmas + probit) on every completed season in data/raw, then scores each
+(game spread, game total) pair. Betting rules per
 docs/MODEL_GUIDE.md: bet the over at bias > 1.0 (strong at > 1.75), at -110
 juice or better, using lines as close to closing as possible.
 """
@@ -48,7 +48,7 @@ def main():
 
     data = load_from_raw(args.season)
     if not data:
-        sys.exit("No training data found (need ../cfb-site/data/raw).")
+        sys.exit("No training data found (need data/raw).")
     years = sorted(data)
     se, te, fp, dp = (np.concatenate([data[y][k] for y in years])
                       for k in range(4))

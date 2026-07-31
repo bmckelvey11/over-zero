@@ -44,7 +44,7 @@ from models_v2 import (  # noqa: E402
     tobit_left_censored_v2,
 )
 
-RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
+RAW_DIR = Path(__file__).resolve().parents[1] / "data" / "raw"
 
 
 # ---------------------------------------------------------------------------

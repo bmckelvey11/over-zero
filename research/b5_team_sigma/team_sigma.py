@@ -13,7 +13,7 @@ sys.path.insert(0, str(REPO / "v2"))
 from models_v2 import (_team_censor_bias, implied_team_points, pick_line,
                        probit_win_v2, tobit_left_censored_v2)
 
-RAW = REPO.parent / "cfb-site" / "data" / "raw"
+RAW = REPO / "data" / "raw"
 K_PRIMARY, K_SENS = 30, (15, 60)
 
 

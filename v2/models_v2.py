@@ -40,7 +40,7 @@ NORM = stats.norm
 # Shared CFBD raw-lines loader (v2/v3/saturation/monitor drivers; v1 keeps
 # its own frozen copy)
 # ===========================================================================
-RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
+RAW_DIR = Path(__file__).resolve().parents[1] / "data" / "raw"
 
 
 def pick_line(game, provider=None):

@@ -1,5 +1,5 @@
 """B3: open-to-close totals drift, computed directly from raw historical
-lines files (../cfb-site/data/raw/lines_{season}.json) instead of a live
+lines files (data/raw/lines_{season}.json) instead of a live
 capture_odds.py snapshot loop.
 
 Owner-approved deviation from the original plan; see research/BLOCKERS.md,
@@ -25,7 +25,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "v2"))
 from models_v2 import _team_censor_bias, implied_team_points, pick_line
 
-RAW = REPO.parent / "cfb-site" / "data" / "raw"
+RAW = REPO / "data" / "raw"
 SEASONS = range(2013, 2026)
 SIGMA_DOG, SIGMA_FAV = 11.03, 11.78
 

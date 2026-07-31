@@ -52,16 +52,10 @@ Run instructions are in each version's README.
 
 ## Data dependency
 
-Scripts read CFBD data from a **sibling checkout of `cfb-site`**
-(`../cfb-site/data/raw/lines_{season}.json` etc., resolved relative to this
-repo's location). Keep both repos side by side, e.g.:
-
-```
-dev/
-├── cfb-site/       # data lives here (data/raw/, data/processed/)
-└── paper_models/   # this repo
-```
-
-Populate the data with `python -m cfb_system_maker scrape --season ...` from
-`cfb-site` first. `v1/run_on_project_data.py` also accepts an explicit `--csv`
-path if your layout differs.
+Scripts read CFBD data from the local `data/` folder (`data/raw/games_{season}.json`,
+`data/raw/lines_{season}.json`, `data/processed/games.csv`) — a copy of the
+same files produced by the sibling `cfb-site` repo's scraper. To refresh with
+newer seasons, re-run `python -m cfb_system_maker scrape --season ...` from
+`cfb-site` and copy the updated `games_*.json`/`lines_*.json`/`games.csv` into
+this repo's `data/`. `v1/run_on_project_data.py` also accepts an explicit
+`--csv` path if your layout differs.

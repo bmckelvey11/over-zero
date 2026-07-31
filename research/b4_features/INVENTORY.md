@@ -18,6 +18,18 @@
 2. **`neutralSite`** - AVAILABLE (bool in games_2024.json)
 3. **`conferenceGame`** - AVAILABLE (bool in games_2024.json)
 4. **`fcs_dog`** - AVAILABLE (can be computed: check if underdog's conference field is None/missing; games_2024.json has awayConference, homeConference; lines_2024.json has awayConference, homeConference)
+   - Full-file null-rate check: awayConference is None in 53 of 3747 records (~1.4%); homeConference is None in 17 of 3747 records (~0.5%). This minority-subset pattern is consistent with FCS opponents (which have no conference data), confirming the field is available for feature computation. Verify by running:
+   ```bash
+   python -c "
+   import json
+   from pathlib import Path
+   g = json.loads(Path('../cfb-site/data/raw/games_2024.json').read_text(encoding='utf-8'))
+   n = len(g)
+   none_away = sum(1 for r in g if r.get('awayConference') is None)
+   none_home = sum(1 for r in g if r.get('homeConference') is None)
+   print(f'total={n} awayConference_None={none_away} homeConference_None={none_home}')
+   "
+   ```
 5. **`home_dog`** - Would require computing underdog position from betting lines (not a raw field)
 
 ### Selection Summary (first 4 supported, in order)

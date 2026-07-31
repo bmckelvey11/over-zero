@@ -29,8 +29,9 @@ RAW_DIR = Path(__file__).resolve().parents[2] / "cfb-site" / "data" / "raw"
 
 
 def load_from_raw(seasons, raw_dir=RAW_DIR):
-    """Same loader as v1 --raw: per game pick a book with both spread and total."""
-    se, te, fp, dp = [], [], [], []
+    """Same loader as v1 --raw: per game pick a book with both spread and total.
+    Also returns the season per game (for cluster-robust SEs)."""
+    se, te, fp, dp, ss = [], [], [], [], []
     for season in seasons:
         path = Path(raw_dir) / f"lines_{season}.json"
         if not path.exists():
@@ -51,7 +52,9 @@ def load_from_raw(seasons, raw_dir=RAW_DIR):
                 continue
             fav, dog = (float(hp), float(ap)) if spread < 0 else (float(ap), float(hp))
             se.append(abs(spread)); te.append(total); fp.append(fav); dp.append(dog)
-    return np.array(se), np.array(te), np.array(fp), np.array(dp)
+            ss.append(season)
+    return (np.array(se), np.array(te), np.array(fp), np.array(dp),
+            np.array(ss))
 
 
 def main():
@@ -61,7 +64,7 @@ def main():
     ap.add_argument("--mc", type=int, default=10000, help="MC draws per game")
     args = ap.parse_args()
 
-    se, te, fp, dp = load_from_raw(args.season)
+    se, te, fp, dp, ss = load_from_raw(args.season)
     print(f"Loaded {se.size:,} games, seasons {min(args.season)}-{max(args.season)}\n")
 
     dog_est, fav_est = implied_team_points(se, te)
@@ -96,6 +99,14 @@ def main():
     print(f"  slope={probit.slope:+.4f} (SE {probit.se_slope:.4f}, "
           f"p={probit.pvalue_slope:.4g})")
     print(f"  bias clearing 52.38% hurdle = {probit.bias_for_hurdle():.3f}")
+
+    n_seasons = np.unique(ss).size
+    if n_seasons > 1:
+        probit_cl = probit_win_v2(over_wins[keep], bias_totals[keep],
+                                  groups=ss[keep])
+        print(f"  season-clustered slope SE={probit_cl.se_slope:.4f}, "
+              f"p={probit_cl.pvalue_slope:.4g} "
+              f"({n_seasons} clusters -- treat as indicative)")
 
     # ---- (B) Correlation -----------------------------------------------------
     print("\n" + "=" * 70)

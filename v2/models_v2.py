@@ -199,11 +199,19 @@ class ProbitFitV2:
         return (NORM.ppf(hurdle) - self.const) / self.slope
 
 
-def probit_win_v2(win, bias):
-    """Probit P(win)=Phi(const+slope*bias) with statsmodels (analytic SEs)."""
+def probit_win_v2(win, bias, groups=None):
+    """Probit P(win)=Phi(const+slope*bias) with statsmodels (analytic SEs).
+
+    `groups` (e.g. season per game) switches to cluster-robust SEs — games in
+    the same season share rule changes and scoring environment, so iid SEs
+    overstate precision. With few clusters (~13 seasons) treat clustered
+    p-values as indicative rather than exact.
+    """
     win = np.asarray(win, float)
     X = sm.add_constant(np.asarray(bias, float))
-    model = sm.Probit(win, X).fit(disp=False)
+    kw = {} if groups is None else dict(
+        cov_type="cluster", cov_kwds={"groups": np.asarray(groups)})
+    model = sm.Probit(win, X).fit(disp=False, **kw)
     return ProbitFitV2(
         const=model.params[0], slope=model.params[1],
         se_const=model.bse[0], se_slope=model.bse[1],

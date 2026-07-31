@@ -7,8 +7,8 @@ is that "censoring bias" is a fancy repackaging of "bet the over on low-total
 games." v3 tests that head-on.
 
 ```bash
-python paper_models/v3/run_v3.py                    # pooled 2013–2025
-python paper_models/v3/run_v3.py --season 2024 2025
+python v3/run_v3.py                    # pooled 2013–2025
+python v3/run_v3.py --season 2024 2025
 ```
 
 `models_v3.py` adds feature construction, (multi)variate probit, and an OOS

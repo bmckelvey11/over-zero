@@ -1,6 +1,6 @@
 """v2 driver: explore the two caveats on real CFBD data (2013-2025).
 
-  python paper_models/v2/run_v2.py --season 2013 2014 ... 2025
+  python v2/run_v2.py --season 2013 2014 ... 2025
 
 (A) Analytic (OPG) Tobit SEs + statsmodels probit SEs vs v1's BFGS SEs.
 (B) Estimate fav/dog error correlation rho; show biasTotals is invariant to it;

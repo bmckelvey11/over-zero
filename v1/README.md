@@ -77,14 +77,14 @@ that clears 52.38% is `(Φ⁻¹(0.5238) − const)/slope`.
 ```bash
 # Recommended: load straight from raw lines (picks a book with BOTH spread and
 # total, recovers ~2,800 games the consensus-only build drops). Needs --season.
-python paper_models/run_on_project_data.py --raw --season 2013 2014 2015 2016 \
+python v1/run_on_project_data.py --raw --season 2013 2014 2015 2016 \
     2017 2018 2019 2020 2021 2022 2023 2024 2025
 
-# Or from the processed build (data/processed/games.csv):
-python paper_models/run_on_project_data.py [--season 2024 2025]
+# Or from the processed build (../cfb-site/data/processed/games.csv):
+python v1/run_on_project_data.py [--season 2024 2025]
 
 # Synthetic self-test: Tobit recovers planted sigmas to 2 decimals.
-python paper_models/demo_reproduce.py
+python v1/demo_reproduce.py
 ```
 
 Two data paths: `--raw` reads `data/raw/lines_{season}.json` (has scores +

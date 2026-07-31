@@ -9,7 +9,7 @@ sigmas, produce a positive probit slope on totals censoring bias, and show the
 over winning >52.38% wherever expected bias exceeds 1.0 point -- the paper's
 55.72% result.
 
-Run:  python paper_models/demo_reproduce.py
+Run:  python v1/demo_reproduce.py
 """
 
 import numpy as np

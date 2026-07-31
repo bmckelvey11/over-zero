@@ -1,6 +1,6 @@
 """v3 driver: is the over-edge censoring, or just 'low total / lopsided'?
 
-  python paper_models/v3/run_v3.py [--season 2013 ... 2025]
+  python v3/run_v3.py [--season 2013 ... 2025]
 """
 
 import argparse

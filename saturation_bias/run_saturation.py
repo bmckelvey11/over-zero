@@ -1,6 +1,6 @@
 """Saturation Bias model driver -- the under-side / ceiling analog.
 
-  python paper_models/saturation_bias/run_saturation.py [--season 2013 ... 2025]
+  python saturation_bias/run_saturation.py [--season 2013 ... 2025]
 """
 
 import argparse

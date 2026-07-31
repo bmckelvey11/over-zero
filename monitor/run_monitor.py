@@ -1,6 +1,6 @@
 """Edge-decay monitor driver.
 
-  python paper_models/monitor/run_monitor.py [--season 2013 ... 2025] [--width 3]
+  python monitor/run_monitor.py [--season 2013 ... 2025] [--width 3]
 """
 
 import argparse

@@ -7,11 +7,11 @@ bias is ~2.3× larger.
 
 ```bash
 # APPROX mode (runs now; 1H line = frac × game line):
-python paper_models/floor_bias_1h/run_1h.py
-python paper_models/floor_bias_1h/run_1h.py --total-frac 0.52   # de-bias 1H excess
+python floor_bias_1h/run_1h.py
+python floor_bias_1h/run_1h.py --total-frac 0.52   # de-bias 1H excess
 
 # REAL mode (true backtest once you have 1H lines):
-python paper_models/floor_bias_1h/run_1h.py --half-lines my_1h_lines.csv
+python floor_bias_1h/run_1h.py --half-lines my_1h_lines.csv
 ```
 
 Files: `floor_bias_1h.py` (loader + pipeline), `run_1h.py` (driver). Estimator

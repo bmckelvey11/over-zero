@@ -7,7 +7,7 @@ finite drives/clock (points saturate at some C → totals biased down → under)
 motivated by the v3 exploration where totals lines > 66 went under ~54%.
 
 ```bash
-python paper_models/saturation_bias/run_saturation.py
+python saturation_bias/run_saturation.py
 ```
 
 `saturation.py` (ceiling-bias math, C selection, OOS under strategy),

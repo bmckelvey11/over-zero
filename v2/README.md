@@ -5,8 +5,8 @@ methodological caveats. **Both turn out to be harmless on this data** — v1's
 results stand — but v2 proves it rather than asserting it.
 
 ```bash
-python paper_models/v2/run_v2.py                       # pooled 2013–2025
-python paper_models/v2/run_v2.py --season 2024 2025     # subset
+python v2/run_v2.py                       # pooled 2013–2025
+python v2/run_v2.py --season 2024 2025     # subset
 ```
 
 Files: `models_v2.py` (analytic-SE Tobit, statsmodels probit, correlation +

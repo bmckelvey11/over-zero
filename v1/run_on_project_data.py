@@ -5,7 +5,7 @@ Maps the project's home-spread convention to the paper's underdog perspective:
 the favorite is whichever team has the negative spread; spreadEst = |spread|
 (>= 0), totalsEst = total, with favPoints/dogPoints assigned accordingly.
 
-Run:  python paper_models/run_on_project_data.py [path/to/games.csv]
+Run:  python v1/run_on_project_data.py [--csv path/to/games.csv]
 """
 
 import csv

@@ -25,7 +25,7 @@ from censoring_bias import (
 
 REPO = Path(__file__).resolve().parents[2]  # archived under paper_models/v1/
 DEFAULT_CSV = REPO / "cfb-site" / "data" / "processed" / "games.csv"
-RAW_DIR = REPO / "data" / "raw"
+RAW_DIR = REPO / "cfb-site" / "data" / "raw"
 
 
 def load_from_raw(seasons, raw_dir=RAW_DIR):

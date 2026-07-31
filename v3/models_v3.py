@@ -108,7 +108,7 @@ def fit_probit(feats, names, over_wins, keep):
     return ProbitMV(
         names=list(names), params=res.params, bse=res.bse, pvalues=res.pvalues,
         means=np.array(means), stds=np.array(stds),
-        llf=res.llf, llnull=null.llf, n=int(y.sum() * 0 + y.size),
+        llf=res.llf, llnull=null.llf, n=int(y.size),
     )
 
 
@@ -118,6 +118,7 @@ def fit_probit(feats, names, over_wins, keep):
 @dataclass
 class FoldResult:
     n_bets: int
+    n_wins: int
     win_rate: float
     unit_return: float
     qtr_kelly_roi: float
@@ -168,14 +169,14 @@ def kfold_compare(spread_est, totals_est, fav_points, dog_points,
             bet = keep_te & (p > hurdle)
             nb = int(bet.sum())
             if nb == 0:
-                out[name].append(FoldResult(0, 0.0, 0.0, 0.0, np.nan))
+                out[name].append(FoldResult(0, 0, 0.0, 0.0, 0.0, np.nan))
                 continue
             w = ow_te[bet]
             wins = int(w.sum())
             pe = np.clip(p[bet], 1e-6, 1 - 1e-6)
             logloss = -np.mean(w * np.log(pe) + (1 - w) * np.log(1 - pe))
             out[name].append(FoldResult(
-                n_bets=nb, win_rate=wins / nb,
+                n_bets=nb, n_wins=wins, win_rate=wins / nb,
                 unit_return=_unit_return(wins, nb),
                 qtr_kelly_roi=kelly_bankroll_roi(w, p[bet], 0.25),
                 mean_logloss=logloss,

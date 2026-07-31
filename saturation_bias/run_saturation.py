@@ -73,7 +73,7 @@ def main():
         if r.n_bets == 0:
             print(f"  {i:>5}  (no bets cleared hurdle)")
             continue
-        tot_n += r.n_bets; tot_w += round(r.win_rate * r.n_bets)
+        tot_n += r.n_bets; tot_w += r.n_wins
         print(f"  {i:>5} {r.n_bets:>6} {r.win_rate*100:>6.2f}% "
               f"{r.unit_return*100:>+6.2f}% {r.qtr_kelly_roi*100:>+7.1f}%")
     if tot_n:

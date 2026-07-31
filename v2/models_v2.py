@@ -122,14 +122,15 @@ def censoring_bias(dog_est, fav_est, sigma_dog, sigma_fav):
 
 def log_likelihood_ratio(n_wins, n_total, q=0.5):
     n, N = float(n_wins), float(n_total)
-    phat = n / N
+    # Clip away 0/N and N/N (possible in tiny OOS folds) so log() stays finite.
+    phat = float(np.clip(n / N, 0.5 / N, 1 - 0.5 / N))
     ll_hat = n * np.log(phat) + (N - n) * np.log(1 - phat)
     ll_q = n * np.log(q) + (N - n) * np.log(1 - q)
     lr = 2.0 * (ll_hat - ll_q)
     return lr, stats.chi2.sf(lr, 1)
 
 
-def kelly_bankroll_roi(over_wins, win_probs, fraction=0.25, *, risk=110.0, payout=100.0):
+def kelly_bankroll_roi(over_wins, win_probs, fraction=1.0, *, risk=110.0, payout=100.0):
     w = np.asarray(over_wins, float)
     p = np.asarray(win_probs, float)
     b = payout / risk

@@ -135,7 +135,7 @@ def tobit_left_censored(y, x, censor=0.0):
         ll += np.sum(NORM.logcdf(z_cen))
         return -ll
 
-    # Start from OLS on the observed (uncensored) points.
+    # Start from OLS on all points (censored included) -- starting values only.
     start = ols_line_test(y, x)
     x0 = np.array([start.alpha, start.beta, np.log(max(start.resid_std, 1e-3))])
     res = optimize.minimize(neg_loglik, x0, method="BFGS")
@@ -240,7 +240,8 @@ def log_likelihood_ratio(n_wins, n_total, q=0.5):
     ~ Chi-square(1). Pushes must already be excluded so outcomes are binomial.
     """
     n, N = float(n_wins), float(n_total)
-    phat = n / N
+    # Clip away 0/N and N/N (possible in tiny OOS folds) so log() stays finite.
+    phat = float(np.clip(n / N, 0.5 / N, 1 - 0.5 / N))
     # Unrestricted minus restricted binomial log-likelihood, times 2.
     ll_hat = n * np.log(phat) + (N - n) * np.log(1 - phat)
     ll_q = n * np.log(q) + (N - n) * np.log(1 - q)

@@ -73,7 +73,7 @@ def main():
           f"{'qtrK%':>8} {'logloss':>8}")
     for name, folds in res.items():
         nb = sum(f.n_bets for f in folds)
-        wins = sum(round(f.win_rate * f.n_bets) for f in folds)
+        wins = sum(f.n_wins for f in folds)
         wr = wins / nb if nb else 0.0
         # pooled unit return and mean logloss across folds (bet-weighted)
         unit = sum(f.unit_return * f.n_bets for f in folds) / nb if nb else 0.0

@@ -60,12 +60,12 @@ def main():
     print("\n5-fold OOS (bet 1H over where P>52.38% and bias>1.0):")
     print(f"  {'fold':>5} {'N':>6} {'win%':>7} {'unit%':>7}")
     tot_n = tot_w = 0
-    for i, (nb, wr, ur) in enumerate(kfold_1h(data), 1):
+    for i, (nb, wins, ur) in enumerate(kfold_1h(data), 1):
         if nb == 0:
             print(f"  {i:>5}  (no bets)")
             continue
-        tot_n += nb; tot_w += round(wr * nb)
-        print(f"  {i:>5} {nb:>6} {wr*100:>6.2f}% {ur*100:>+6.2f}%")
+        tot_n += nb; tot_w += wins
+        print(f"  {i:>5} {nb:>6} {wins/nb*100:>6.2f}% {ur*100:>+6.2f}%")
     if tot_n:
         print(f"  {'TOT':>5} {tot_n:>6} {tot_w/tot_n*100:>6.2f}%")
 

@@ -153,6 +153,7 @@ def select_ceiling(spread_est, totals_est, fav_points, dog_points,
 @dataclass
 class UnderFold:
     n_bets: int
+    n_wins: int
     win_rate: float
     unit_return: float
     qtr_kelly_roi: float
@@ -189,12 +190,12 @@ def kfold_under_strategy(spread_est, totals_est, fav_points, dog_points,
         bet = keep[te] & (p > hurdle)
         nb = int(bet.sum())
         if nb == 0:
-            out.append(UnderFold(0, 0.0, 0.0, 0.0))
+            out.append(UnderFold(0, 0, 0.0, 0.0, 0.0))
             continue
         w = under[te][bet]
         wins = int(w.sum())
         out.append(UnderFold(
-            n_bets=nb, win_rate=wins / nb,
+            n_bets=nb, n_wins=wins, win_rate=wins / nb,
             unit_return=(wins * 100 - (nb - wins) * 110) / (nb * 110),
             qtr_kelly_roi=kelly_bankroll_roi(w, p[bet], 0.25),
         ))

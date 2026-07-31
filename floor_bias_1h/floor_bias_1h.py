@@ -108,6 +108,8 @@ def load_1h(seasons, raw_dir=RAW_DIR, half_lines_csv=None,
             hl, al = g.get("homeLineScores"), g.get("awayLineScores")
             if gid not in game_line or not hl or not al or len(hl) < 2 or len(al) < 2:
                 continue
+            if None in hl[:2] or None in al[:2]:     # null quarter entries
+                continue
             game_spread, game_total = game_line[gid]
             if game_spread == 0:
                 continue
@@ -195,7 +197,7 @@ def strategy_1h(fit: Pipeline1H, threshold=1.0):
 
 def kfold_1h(data: Data1H, k=5, hurdle=0.5238, threshold=1.0, seed=0):
     """Train pipeline on k-1 folds, bet 1H over on held-out fold where the probit
-    win prob > hurdle AND bias > threshold. Returns per-fold (n, win%, unit%)."""
+    win prob > hurdle AND bias > threshold. Returns per-fold (n, wins, unit%)."""
     n = data.half_spread_est.size
     rng = np.random.default_rng(seed)
     folds = np.array_split(rng.permutation(n), k)
@@ -218,9 +220,9 @@ def kfold_1h(data: Data1H, k=5, hurdle=0.5238, threshold=1.0, seed=0):
         bet = (nu != 0) & (wp > hurdle) & (bias > threshold)
         nb = int(bet.sum())
         if nb == 0:
-            rows.append((0, 0.0, 0.0))
+            rows.append((0, 0, 0.0))
             continue
         w = (nu[bet] > 0).astype(float)
         wins = int(w.sum())
-        rows.append((nb, wins / nb, (wins * 100 - (nb - wins) * 110) / (nb * 110)))
+        rows.append((nb, wins, (wins * 100 - (nb - wins) * 110) / (nb * 110)))
     return rows

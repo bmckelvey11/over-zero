@@ -125,7 +125,12 @@ bet, sequential).
 | 2023 | 76 | 55.26% | +5.5% | +61.3% |
 | 2024 | 93 | 58.06% | +10.9% | +66.8% |
 | 2025 | 79 | 55.70% | +6.3% | −3.9% |
-| **Pooled** | **680** | **56.62%** | **+8.1%** | **+1288% (13.9× over 13 yr, ≈ +22%/yr)** |
+| **Pooled** | **680** | **56.62%** | **+8.1%** | († see note) |
+
+† Pooled compounded ¼-Kelly was +1288% (13.9× over 13 yr) but assumes
+bet-by-bet sequential compounding; bets cluster on same-day slates where
+resizing on settled outcomes is impossible, so treat win%/unit% as the
+headline and the compounded figure as an in-sample upper bound.
 
 11/13 seasons profitable on win rate; aggregate 56.62% over 680 bets beats the
 paper's 55.72%. Losing seasons (2015, 2016) are tiny-N and 2015's probit slope
@@ -147,7 +152,15 @@ flipped negative — looks like variance, not regime change.
   empty; pre-2013 unavailable). Scores go back to 1992 but are unusable without
   lines. Paper's 1992–2017 came from Goldsheet, a different source.
 - **In-sample.** Per-season and pooled win rates are in-sample (k-fold is the
-  out-of-sample check). Compounded bankroll ROIs depend on bet order.
+  out-of-sample check). Compounded bankroll ROIs depend on bet order. The
+  stricter walk-forward protocol (train on seasons ≤ t−1 only — see
+  [monitor/](../monitor/)) pools 56.83% over 681 bets with the Wilson 95%
+  lower bound above breakeven, so the edge survives honest time ordering.
+- **Book selection.** The `--raw` loader takes consensus if present, else the
+  first book carrying both lines — an arbitrary book could in principle be a
+  soft line flattering the edge. Consensus-only sensitivity (2013–2025):
+  4,927 games, 282 bets at bias > 1.0, **58.16%** win (Wilson 95%
+  [52.3, 63.8], unit +11.0%) — the edge is not an artifact of soft books.
 - Tobit/probit standard errors use the BFGS inverse-Hessian approximation, not
   the analytic information matrix — fine for inference here, tighten if needed.
 - Models assume favorite/underdog score errors are independent (paper's

@@ -34,7 +34,7 @@ biasTotals coefficient shift with features: +0.39 SEs (over 1 SE = features mate
 
 The tested features — week, neutralSite, conferenceGame, and home_dog — show very limited ability to explain the excess overs beyond the censoring baseline. Only one feature (neutralSite) clears the Bonferroni threshold, and its effect is small (−0.022 standardized). The biasTotals coefficient remains stable when features are added (+0.39 SE shift, well under 1 SE), confirming that the raw-data features do not overlap with the censoring-bias signal in a materially meaningful way.
 
-**The features tested do not explain the excess edge.** The finding is consistent with the open question: if the over-edge exists beyond measurement error in implied points, censoring in team scoring, and week/location/matchup effects, then either (a) a feature not yet considered (e.g., recruit rankings, coaching tenure, game importance) drives it, or (b) the excess is statistical noise that vanishes under proper multiple-comparison control.
+**No feature materially displaces the censoring signal.** One feature (neutralSite) clears the Bonferroni bar with a small negative effect that does not undermine the biasTotals estimate. The finding is consistent with the open question: if the over-edge exists beyond measurement error in implied points, censoring in team scoring, and week/location/matchup effects, then either (a) a feature not yet considered (e.g., recruit rankings, coaching tenure, game importance) drives it, or (b) the excess is statistical noise that vanishes under proper multiple-comparison control.
 
 With ~12k games a standardized probit coefficient below ≈0.03 is undetectable at this power; absence of significance is not absence of effect for smaller influences.
 

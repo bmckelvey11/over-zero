@@ -114,7 +114,12 @@ not a null result, because the field itself is absent from the source data
 for that period. Separately: in 2023–2025 up to three books contribute a
 drift observation per game, so book-game pairs are not fully independent
 within a game and the nominal 95% CI is mildly anti-conservative in those
-seasons (2021–2022 are single-book, so unaffected there).
+seasons (2021–2022 are single-book, so unaffected there). Since 76% of the
+pooled QUALIFYING n = 514 comes from these multi-book seasons
+(2023–2025: n = 89 + 112 + 190 = 391), this caveat also applies to the
+pooled CI reported above, not just the per-season ones — the true pooled CI
+is somewhat wider than reported. This widening only reinforces the null
+conclusion, moving the CI further from significance rather than toward it.
 
 **Stability across years:** the ALL-games sign is not stable — 2021 is
 positive, 2022–2025 are all negative — and the QUALIFYING-games sign flips
@@ -140,11 +145,13 @@ from opening totals in either direction on qualifying games. The point
 estimate's sign (positive, nominally favoring "early is better for the
 over") should not be treated as a finding — the CI includes zero, and the
 per-season breakdown shows the sign flipping between 2021–2023 (negative or
-near-zero) and 2024–2025 (positive). The sign flip lines up with the
-provider mix expanding (DraftKings joins in 2023, ESPN Bet in 2024 — see
-the data availability caveat above), which is the most plausible driver of
-the apparent shift, rather than a stable market phenomenon in either
-direction.
+near-zero) and 2024–2025 (positive). The sign flip between 2021–2023 and 2024–2025 is consistent with
+season-level noise given the small per-season n; provider mix also changes
+across some years (DraftKings joins in 2023, ESPN Bet in 2024 — see the
+data availability caveat above), but this hypothesis was never tested
+against a provider-stratified breakdown. Notably, the 2021→2022 flip occurs
+with no provider-mix change at all (both seasons are Bovada-only), so
+provider mix cannot be the sole driver of the apparent shift.
 
 The pooled ALL-games CI (entirely negative, [-0.4290, -0.3243]) is
 statistically clean but is the wrong population for this interpretation —

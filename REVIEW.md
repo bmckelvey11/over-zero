@@ -259,3 +259,30 @@ are about making the evidence match the strength of the claim.
 7. Consolidate `load_from_raw` into `models_v2.py` (delete 4 copies).
 8. Consensus-only sensitivity table; demote the +1288% compounded figure.
 9. Nits as touched: LR zero-guard, `n=int(y.size)`, wins in fold results, v2 "verbatim" header, chat_history relocation.
+
+---
+
+## Addendum — all fixes applied (2026-07-30)
+
+Every item above landed the same day (commits `22ca204` … `32a43c3`). What the
+new computations found — **both CAVEATs resolve in the model's favor**:
+
+- **Walk-forward backtest** ([monitor/run_walkforward.py](monitor/run_walkforward.py),
+  train ≤ t−1, bet t, first bet season 2016): rule A (bias > 1.0) pools
+  **56.83% over 681 bets**, Wilson 95% [53.1%, 60.5%], unit +8.49%, LR vs
+  breakeven p = 0.020; 9/10 test seasons profitable. Matches the in-sample
+  56.62% — the edge is not a time-mixing artifact. The pooled Wilson lower
+  bound clears breakeven under the honest protocol.
+- **Season-clustered probit SEs**: slope +0.176 with clustered SE 0.0200
+  (p ≈ 1e−18, 13 clusters — indicative) vs analytic iid SE 0.0284
+  (p ≈ 6e−10). Significance is robust to clustering.
+- **Consensus-only sensitivity**: 4,927 games / 282 bets at bias > 1.0 win
+  **58.16%** (Wilson 95% [52.3%, 63.8%], unit +11.0%) vs 56.62% any-book —
+  the edge is not an artifact of soft first-listed books.
+
+Post-fix verdict upgrades from *sound-with-caveats* to **sound** for the
+line-only strategy on 2013–2025 CFBD closing lines: the inefficiency claim and
+the profitability claim now rest on the deployable protocol with
+dependence-aware uncertainty. Remaining honest limits (unchanged): −110 flat
+vig assumed, slate-level Kelly sizing not modeled (compounded figures are
+upper bounds), and the 1H module still awaits real first-half lines.

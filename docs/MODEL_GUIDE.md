@@ -211,6 +211,52 @@ Breakeven win rate by juice, against the walk-forward edge:
 bias > 1.75. Never worse than −120.** Shop lines — a half-point of juice is a
 fifth of the edge.
 
+### Getting the best number and price
+
+The two things you shop for are the **total** (the number) and the **juice**
+(the price). They convert into each other at a fixed rate, because the totals
+forecast error has σ ≈ 16.3 points:
+
+- **Each 1.0 point of total ≈ 2.45 pp of win probability.** A half-point
+  ≈ 1.22 pp.
+- **Each 5 cents of juice ≈ 1.1 pp of breakeven** (−110 → −115 moves
+  breakeven 52.38% → 53.49%).
+- So **a half-point of total ≈ 5 cents of juice**. Over 41.0 at −115 and over
+  41.5 at −110 are nearly the same bet; prefer the lower total when it's
+  close (a lower number can also turn a loss into a push on integer totals).
+
+Practical rules, in order of value:
+
+1. **Take the lowest total on the board.** Shop books before shopping juice —
+   over 40.5 at −110 beats over 41.5 at −105. For the over, lower number =
+   strictly better, and every point is worth ~2.4 pp.
+2. **Then take the best juice at that number** (−105 beats −110 by 1.16 pp of
+   breakeven — a quarter of the standard edge, for free).
+3. **Never buy the hook.** Books sell the half-point at ~10 cents; it's worth
+   ~5. Buying 41.0 → 40.5 for −120 pays 2.2 pp of breakeven for 1.2 pp of
+   win probability — a losing trade every time.
+4. **Score the game at the number you actually take**, not the consensus.
+   `score_game.py 21 40.5` and `21 42.5` can straddle the threshold.
+
+**When to bet.** The edge is *structural*, not informational: the closing
+line itself is mispriced, so — unlike steam-chasing strategies — you do not
+need to beat the close to have the edge. The backtest is validated on
+closing-type numbers, which means:
+
+- **Default: bet close to kickoff** (day-of). That is the validated protocol,
+  and it prices in all late news (weather, QB scratches) that could move a
+  qualifying total.
+- **Betting earlier in the week is fine when the number qualifies** — the
+  mispricing is a function of the number itself — but you take on line-move
+  risk both ways, and early totals carry more non-model uncertainty.
+- **Whether early numbers are systematically better is an open question**
+  (CFBD carries one snapshot per game, so open-to-close drift in qualifying
+  games is unmeasured — see §9). Resolve it yourself with your bet log:
+  record your total vs the closing total. Each point below close ≈ +2.4 pp
+  over the validated 56.8%; each point above ≈ −2.4 pp. If your CLV is
+  consistently positive early in the week, move earlier; if negative, wait
+  for the close.
+
 ### Sizing
 
 - **Baseline: flat stakes, 1 unit = 1% of bankroll.** This is what the
@@ -282,6 +328,8 @@ Data comes from a sibling `cfb-site` checkout
 | Signal | `biasTotals` = expected left-censoring bias implied by spread + total |
 | Threshold | > 1.0 (standard), > 1.75 (strong) |
 | Price | −110 or better (to −120 only if strong) |
+| Number | lowest total on the board; 0.5 pt ≈ 5 cents of juice; never buy the hook |
+| Timing | day-of/close (validated protocol); earlier OK if the number qualifies — log CLV |
 | Sizing | flat 1% or ¼-Kelly ≈ 1.4% |
 | Volume | ~70–110 bets/season (standard), ~23 (strong) |
 | Validated edge | 56.83% [53.1, 60.5] / 64.53% [58.2, 70.4], walk-forward 2016–2025 |
@@ -310,6 +358,70 @@ Data comes from a sibling `cfb-site` checkout
 - **This is research, not financial advice.** Sports betting is
   negative-expectation for almost everyone; a 4.5 pp edge, if it persists, is
   grindy and volatile. Legality depends on your jurisdiction.
+
+## 9. Open questions
+
+Ranked roughly by how much each could change the strategy, with what would
+resolve it.
+
+1. **Why is the realized edge bigger than censoring alone predicts?**
+   Pure-censoring theory says the over-rate should climb from ~50.2% to
+   ~52.3% across the bias bins; empirically it climbs 47.7% → 55.9%
+   ([v2](../v2/)'s bonus finding). [v3](../v3/) ruled out "it's just low
+   totals/lopsided" — so something *else* mispriced correlates with
+   high-censoring games: fat-tailed scoring, garbage-time dynamics, or
+   public under-appetite for ugly games. Resolving it needs features beyond
+   the two lines (pace, weather, play-calling) and could either enlarge the
+   edge or explain when it fails.
+2. **Is the first-half edge real?** Theory says the 1H over edge should be
+   ~2.3× stronger (censoring binds much harder on ~10-point half scores), and
+   the approximation survives de-biasing — but it is unvalidated until
+   someone supplies real historical 1H closing lines
+   (`game_id,half_spread,half_total` → `python floor_bias_1h/run_1h.py
+   --half-lines file.csv`, [floor_bias_1h/](../floor_bias_1h/)). Potentially
+   the biggest upgrade available; odds archives (Unabated, OddsJam,
+   SBR-style archives) carry 1H markets.
+3. **Underdog team totals — the purest expression?** The mechanism lives in
+   the *underdog's* score, not the game total. If books post team totals for
+   qualifying dogs (implied ≤ 10.5), the over on the *dog team total* should
+   carry the censoring bias undiluted by the favorite's noise. Needs a team-
+   totals line history; nothing in CFBD. Lower limits, but a sharper
+   instrument.
+4. **Do early-week numbers beat the close in qualifying games?** CFBD stores
+   one snapshot, so open-to-close drift is unmeasured (see "When to bet",
+   §5). If qualifying totals systematically rise toward kickoff, betting
+   openers adds points of CLV on top of the structural edge; if they fall,
+   the close is the floor. A season of multi-snapshot odds data (or your own
+   bet log) settles it.
+5. **What juice do books actually charge on qualifying overs?** CFBD carries
+   numbers, not prices; the backtest assumes −110 both sides. If books
+   already shade qualifying overs to −115/−120, the realized edge is 1–2 pp
+   thinner than measured. Your bet log answers this immediately; a
+   price-history feed answers it retroactively.
+6. **How much money can this absorb?** Qualifying games are low-liquidity
+   (mid-week MAC games, service academies); totals limits there are small,
+   and a few thousand dollars can move the number. The edge may persist
+   *because* it is not worth a book's while to fix. Unknown: the bankroll
+   size at which you become the line move. Relevant if sizing beyond
+   recreational units.
+7. **Does the mechanism travel?** Any sport where a side's expected score
+   sits within ~1σ of zero should show floor bias: NFL first-half team
+   totals, college basketball halves (no — means far from 0), low-total
+   soccer and NHL (yes in spirit, but scores are Poisson-like, not Gaussian —
+   the Tobit math needs redoing discretely). Untested extensions; the CFB
+   result says the *idea* prices, not that every market misses it.
+8. **Is the Gaussian-Tobit approximation costing accuracy?** Football scores
+   are discrete and clumped (0, 3, 7, 10…), and the latent-normal assumption
+   is an approximation. A discrete scoring model (drive-based or
+   points-distribution) would give sharper per-game bias estimates —
+   probably second-order for the bet/no-bet decision, first-order if anyone
+   tries to price P(over) precisely enough for Kelly sizing per game.
+9. **Team-level σ heterogeneity.** One σ per role (dog/favorite) is fitted
+   for all teams; triple-option and extreme-tempo teams plausibly have
+   different score variance, which changes their censoring bias at the same
+   implied points. A hierarchical σ (team- or style-level, shrunk toward the
+   pooled value) might re-rank borderline bets — with the usual overfitting
+   and generated-regressor risks.
 
 ---
 

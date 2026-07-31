@@ -27,3 +27,10 @@ what is blocked, and a recommendation.
 3. **Report as inestimable:** Run full spec with 3 features, explicitly note `fcs_dog` dropped due to zero variance, leave threshold at 0.0125
 
 Each choice alters the prespecified 4-feature budget or the Bonferroni denominator — none is transparent without intervention. Recommend clarifying with the research plan owner before proceeding.
+
+**Resolution (owner decision, 2026-07-31):** Substitute `home_dog` for
+`fcs_dog`. `home_dog` is item 5 in the plan's own prespecified candidate
+list (Task B4.1, "only if fewer than 4 of the above are available") —
+using it here keeps the analysis within the plan's own fallback ordering.
+FEATURES becomes `["week", "neutralSite", "conferenceGame", "home_dog"]`;
+Bonferroni budget stays at 4 features (p < 0.0125), unchanged.

@@ -130,6 +130,20 @@ reflection of one stable market phenomenon over time; it is more consistent
 with season-level noise (and/or provider-mix composition changing year to
 year, since which books contribute qualifying pairs changes across seasons).
 
+**Selection-on-outcome caveat:** the QUALIFYING population is selected using
+`pick_line(g)`'s **closing** total to compute the bias filter (bias > 1.0),
+but the outcome being measured is `drift = close - open`, which also
+contains that same closing total. This means the QUALIFYING sample is
+conditioned on a function of the closing line while the closing line is
+also part of the outcome — selection-on-outcome — which mechanically shifts
+the QUALIFYING drift distribution relative to an unconditional one. This is
+inherited from the original plan's B3.2 design (which computes the bias
+filter "at the LAST snapshot," i.e. close), not a new defect introduced by
+this raw-data driver. It does not change the reported null verdict below
+(the CI already straddles zero), but the QUALIFYING drift distribution
+should be understood as a design property of the conditioning, not a
+directly comparable, unconditionally-sampled drift distribution.
+
 ## 4. Verdict (applying the fixed interpretation)
 
 Per the brief's fixed interpretation: positive mean drift on **qualifying**

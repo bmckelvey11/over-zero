@@ -36,6 +36,16 @@
 - [x] week
 - [x] neutralSite
 - [x] conferenceGame
-- [x] fcs_dog
+- [ ] fcs_dog
+- [x] home_dog
 
 **Total selected: 4 features** (Bonferroni budget reached)
+
+**Note:** `fcs_dog` turned out to be zero-variance post-join (no FCS
+opponent carries a betting line, so `fcs_dog=0` for all 12,493 joined
+games) and was substituted with `home_dog` (item 5 above, the plan's own
+next-in-order fallback candidate) for the actual B4.2 run — see
+`research/BLOCKERS.md`, B4.2 entry (owner resolution dated 2026-07-31).
+`home_dog` is selected in place of `fcs_dog`; the "first 4 supported"
+framing above reflects the original B4.1 determination and predates this
+substitution.

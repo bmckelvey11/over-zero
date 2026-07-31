@@ -38,6 +38,8 @@ The tested features — week, neutralSite, conferenceGame, and home_dog — show
 
 With ~12k games a standardized probit coefficient below ≈0.03 is undetectable at this power; absence of significance is not absence of effect for smaller influences.
 
+**Clustering caveat:** SEs here are season-clustered (`cov_type="cluster"`) over only 13 season clusters (2013–2025). `v2/models_v2.py`'s own docstring on this estimator warns that "with few clusters (~13 seasons) treat clustered p-values as indicative rather than exact." The `neutralSite` result (p=0.0067 against a 0.0125 Bonferroni bar) is exactly this kind of marginal call — it clears the bar, but the margin (0.0058) is well within the range where an approximate cluster-robust p-value should be read as indicative rather than exact, so the significance finding is more marginal than the raw p-value alone suggests.
+
 ---
 
 **Note:** The feature list was originally `["week", "neutralSite", "conferenceGame", "fcs_dog"]` per B4.1, but `fcs_dog` had zero variance post-join (no FCS teams carry betting lines in the dataset). Per BLOCKERS.md commit 11b2500, `fcs_dog` was substituted with `home_dog` (an underutilized candidate from B4.1's ranked list) to preserve the 4-feature budget and Bonferroni denominator. The analysis reported here tests the substituted feature set.

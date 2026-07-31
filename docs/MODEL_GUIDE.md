@@ -359,6 +359,20 @@ Data comes from a sibling `cfb-site` checkout
 
 ## 8. Failure modes & limits
 
+- **The edge is not uniform across the board — and may be absent on the FBS
+  slate.** Splitting the walk-forward bets by division
+  ([EXTENSIONS.md §3](EXTENSIONS.md#3-the-empirical-finding-it-already-travels--one-rung-down-not-sideways),
+  `python research/extensions/division_cohorts.py`): FBS-vs-FBS games go
+  **50.0% over 268 bets** (−4.5% per unit) while games involving an FCS team
+  go 59.4%–68.2%. The headline 56.83% is a blend. The censoring signal is
+  positive and significant in all three cohorts, but at bias > 1.0 it only
+  clears the vig in cross-division and FCS games. At bias > 1.75 the FBS board
+  does clear it (56.1% over 57 bets), so the likely reading is that **the
+  threshold that beats the vig is division-dependent** — ~1.0 where the
+  mismatch is structural, higher on the FBS slate. This is a post-hoc subgroup
+  split and is **not yet** a rule change — but if you are betting the FBS
+  board at bias > 1.0 on the strength of the headline number, know that the
+  headline is carried by games elsewhere. Read that section's caveats first.
 - **The books read SSRN too.** If books shade qualifying totals up (or tilt
   juice to −115/−120 on those overs), the edge compresses precisely where
   filter 2 catches it. The price filter is not optional.
@@ -459,13 +473,18 @@ resolve it.
    --half-lines file.csv`, [floor_bias_1h/](../floor_bias_1h/)). Potentially
    the biggest upgrade available; odds archives (Unabated, OddsJam,
    SBR-style archives) carry 1H markets.
-3. **Underdog team totals — the purest expression?** The mechanism lives in
-   the *underdog's* score, not the combined game total. If books post team
-   totals for qualifying dogs (implied ≤ 10.5), the over on the *dog team
-   total* should carry the censoring bias undiluted by the favorite's noise.
-   Needs a team-totals line history; nothing in CFBD. Lower limits, but a
-   sharper instrument. Until someone runs that backtest, the validated bet
-   remains the combined game total only.
+3. **Underdog team totals — a diagnostic, not a sharper instrument.**
+   *Revised 2026-07-31 — the original premise here was wrong.* This question
+   used to propose the dog team total as "the purest expression", carrying the
+   bias undiluted by the favorite's noise. Under pure censoring it carries
+   **exactly nothing**: censoring is a *mean* effect, all displaced mass piles
+   at 0 far below the line, so `P(max(0,X) > μ) = P(X > μ) = 0.5` and the
+   median is untouched. Pooling the two sides is what turns the mean gap into
+   a quantile shift ([EXTENSIONS.md §2a](EXTENSIONS.md#2a-the-pooling-theorem--censoring-alone-does-not-pay-on-a-single-side)).
+   The backtest is still worth running, for a better reason: pure censoring
+   predicts *exactly* 50%, so any edge found on dog team totals is a clean
+   measurement of the open-question-1 residual, isolated from censoring for
+   the first time. The validated bet remains the combined game total only.
 4. **Do early-week numbers beat the close in qualifying games?** CFBD stores
    one snapshot, so open-to-close drift is unmeasured (see "When to bet",
    §5). If qualifying totals systematically rise toward kickoff, betting
@@ -483,12 +502,17 @@ resolve it.
    *because* it is not worth a book's while to fix. Unknown: the bankroll
    size at which you become the line move. Relevant if sizing beyond
    recreational units.
-7. **Does the mechanism travel?** Any sport where a side's expected score
-   sits within ~1σ of zero should show floor bias: NFL first-half team
-   totals, college basketball halves (no — means far from 0), low-total
-   soccer and NHL (yes in spirit, but scores are Poisson-like, not Gaussian —
-   the Tobit math needs redoing discretely). Untested extensions; the CFB
-   result says the *idea* prices, not that every market misses it.
+7. **Does the mechanism travel?** Worked through properly in
+   [EXTENSIONS.md](EXTENSIONS.md), which restates the model as a zero-strike
+   Bachelier call, gives a screening statistic (bias-to-noise ratio; −110
+   needs BNR ≳ 0.060), and ranks candidate markets. Short version: NFL and
+   basketball are dead (means 2σ+ from the floor); soccer is dead *despite*
+   the lowest scores in sport, because books already model goals as
+   non-negative counts — the edge comes from a book using a Gaussian/linear
+   representation for a bounded quantity, not from scores being near zero.
+   The live candidates are shorter windows in football (§2b's √t law), MLB's
+   unplayed bottom of the 9th (a different, stronger boundary type), and —
+   already measurable in this repo's data — lower-division CFB (§8 below).
 8. **Is the Gaussian-Tobit approximation costing accuracy?** Football scores
    are discrete and clumped (0, 3, 7, 10…), and the latent-normal assumption
    is an approximation. A discrete scoring model (drive-based or
@@ -501,6 +525,20 @@ resolve it.
    implied points. A hierarchical σ (team- or style-level, shrunk toward the
    pooled value) might re-rank borderline bets — with the usual overfitting
    and generated-regressor risks.
+10. **Why is the edge concentrated in FCS/cross-division games?** *(New
+   2026-07-31; by size of effect this belongs near the top of this list —
+   left last only to keep the existing numbering stable.)* The walk-forward
+   edge is carried almost entirely by games involving an FCS team; FBS-vs-FBS
+   sits at 50.0% over 268 bets
+   ([EXTENSIONS.md §3](EXTENSIONS.md#3-the-empirical-finding-it-already-travels--one-rung-down-not-sideways)).
+   Two readings: *mechanism* (mismatches drive dogs toward the floor —
+   cross-division games shut out the dog 12.7% of the time vs 2.9% in FBS),
+   or *market quality* (books price FCS boards with less effort and lower
+   limits, so nobody is paid to kill the edge). Not exclusive. The second
+   reading implies a hard capacity ceiling (question 6) and makes the FBS
+   result decay rather than absence. Resolving it decides whether the bet
+   rule should carry a division filter. Wants a threshold sweep and a
+   per-season stability check first — both cheap, data already local.
 
 ---
 

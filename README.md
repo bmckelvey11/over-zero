@@ -41,6 +41,15 @@ betting playbook (filters, pricing, sizing, stop rules). Score a game with
   relationship runs the wrong way, and no OOS under strategy survives. The
   censoring asymmetry is real: floor → over edge, no symmetric under edge.
 
+- **[research/extensions/](research/extensions/)** — where else the math pays.
+  Restates the model as a zero-strike Bachelier call, screens candidate
+  markets on a bias-to-noise ratio, and splits the validated CFB edge by
+  division. Two results worth knowing: single-side **team totals earn exactly
+  zero** under pure censoring (it's a mean effect, not a quantile effect), and
+  the walk-forward edge is carried almost entirely by **FCS/cross-division**
+  games (FBS-vs-FBS: 50.0% over 268 bets). Writeup:
+  **[docs/EXTENSIONS.md](docs/EXTENSIONS.md)**.
+
 - **[monitor/](monitor/)** — operational truth tools: the **edge-decay
   monitor** (per-season and trailing-window probit slope + win% with CIs,
   trend test — no decay through 2025) and the **walk-forward backtest**

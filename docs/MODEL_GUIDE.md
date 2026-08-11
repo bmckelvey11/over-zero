@@ -373,24 +373,42 @@ Practical rules, in order of value:
 4. **Score the game at the number you actually take**, not the consensus.
    `score_game.py 21 40.5` and `21 42.5` can straddle the threshold.
 
-**When to bet.** The edge is *structural*, not informational: the closing
-line itself is mispriced, so — unlike steam-chasing strategies — you do not
-need to beat the close to have the edge. The backtest is validated on
-closing-type numbers, which means:
+**When to bet: take the best number when the game qualifies — don't wait
+for the close on principle.** The edge is *structural*, not informational:
+the closing line itself is mispriced, so — unlike steam-chasing strategies —
+you do not need to beat the close to have the edge. The close is the
+*validation benchmark*, not the optimal entry. The decision logic, in order:
 
-- **Default: bet close to kickoff** (day-of). That is the validated protocol,
-  and it prices in all late news (weather, QB scratches) that could move a
-  qualifying total.
-- **Betting earlier in the week is fine when the number qualifies** — the
-  mispricing is a function of the number itself — but you take on line-move
-  risk both ways, and early totals carry more non-model uncertainty.
-- **Whether early numbers are systematically better is an open question**
-  (CFBD carries one snapshot per game, so open-to-close drift in qualifying
-  games is unmeasured — see §10). Resolve it yourself with your bet log:
-  record your total vs the closing total. Each point below close ≈ +2.4 pp
-  over the validated 64.5%; each point above ≈ −2.4 pp. If your CLV is
-  consistently positive early in the week, move earlier; if negative, wait
-  for the close.
+1. **The edge dwarfs the timing effect.** Your margin at −110 is ~+6 pp at
+   the CI lower bound; measured open-to-close drift is ±0.4 pts ≈ ±1 pp.
+   Never pass up a qualifying bet at a good number to optimize timing.
+2. **Number beats timing as the thing to shop.** One point of total ≈ 2.4 pp
+   — at the conservative +3.7 pp edge (−120), a single point is a quarter of
+   your entire margin. Scanning several books at whatever moment you bet
+   matters far more than choosing the moment.
+3. **Qualify on the numbers in front of you** when you bet, per filter 6. If
+   the line later drifts out of qualification, log it and move on — that is
+   the cost of early numbers. If it drifts further in, free upgrade.
+4. **The measured drift mildly favors early.** Open-to-close drift on
+   qualifying games ([research/b3_snapshots/](../research/b3_snapshots/RESULTS.md)):
+   the market at large moves totals *down* toward close (−0.38 pts, CI
+   [−0.43, −0.32]), but qualifying games leaned *up* in 2024 (+0.51,
+   CI [+0.11, +0.92]) and 2025 (+0.38, CI [+0.06, +0.70]) — consistent with
+   late public over-money on lopsided favorites. A rising total means the
+   early number is the better one for an over bettor. Weight this weakly:
+   the pooled 2021–2025 estimate is null (+0.13, CI [−0.05, +0.32]), the
+   sign flips across seasons, coverage starts in 2021, and "qualifying" is
+   defined off the closing bias, which you cannot know early.
+
+Trade-offs of betting early that the drift stat doesn't capture: early
+totals carry more non-model uncertainty (weather, QB scratches price in
+late), and early markets can have lower limits and wider juice.
+
+**Your bet log settles this for your books.** Record your total vs the
+closing total (CLV) on every bet — each point below close ≈ +2.4 pp over
+the validated rate, each point above ≈ −2.4 pp. Two seasons of your own log
+beats five seasons of patchy CFBD opens: if your CLV runs positive early in
+the week, keep betting early; if negative, shift toward close.
 
 ### Sizing
 
@@ -483,7 +501,7 @@ Data comes from this repo's local `data/` folder
 | Threshold | **> 1.75** (changed 2026-08-11 from > 1.0; 1.00–1.75 shows no demonstrated edge) |
 | Price | −120 or better; never worse than −125 |
 | Number | lowest total on the board; 0.5 pt ≈ 5 cents of juice; never buy the hook |
-| Timing | day-of/close (validated protocol); earlier OK if the number qualifies — log CLV |
+| Timing | best number when the game qualifies; close = validation benchmark, not entry signal — log CLV |
 | Sizing | flat 1%, or ¼-Kelly **off the 58.2% CI lower bound ≈ 3%** — *not* the 6.4% that the 64.53% point estimate implies |
 | Volume | ~30–50 bets/season recently (2.3% of lined games; 10-season mean 23) |
 | Validated edge | 64.53% [58.2, 70.4], walk-forward 2016–2025 |
@@ -606,12 +624,15 @@ resolve it.
    Needs a team-totals line history; nothing in CFBD. Lower limits, but a
    sharper instrument. Until someone runs that backtest, the validated bet
    remains the combined game total only.
-4. **Do early-week numbers beat the close in qualifying games?** CFBD stores
-   one snapshot, so open-to-close drift is unmeasured (see "When to bet",
-   §5). If qualifying totals systematically rise toward kickoff, betting
-   openers adds points of CLV on top of the structural edge; if they fall,
-   the close is the floor. A season of multi-snapshot odds data (or your own
-   bet log) settles it.
+4. **Do early-week numbers beat the close in qualifying games?** Partially
+   measured ([research/b3_snapshots/](../research/b3_snapshots/RESULTS.md)):
+   CFBD's `overUnderOpen` field (2021+ only, provider-limited) shows
+   qualifying totals rose toward close in 2024–25 (+0.4 to +0.5 pts, CIs
+   above zero) while the market at large fell — favoring early entry — but
+   the pooled estimate is null and the sign is unstable across seasons (see
+   "When to bet", §5). Still open: pre-2021 behavior, intra-week shape
+   (open vs mid-week vs close), and prices alongside numbers. A season of
+   multi-snapshot odds data (or your own bet log) settles it.
 5. **What juice do books actually charge on qualifying overs?** CFBD carries
    numbers, not prices; the backtest assumes −110 both sides. If books
    already shade qualifying overs to −115/−120, the realized edge is 1–2 pp

@@ -30,6 +30,12 @@ above 1.75, at a price of −120 or better.**
 One command computes the bias number for any game from its spread and total:
 `python monitor/score_game.py SPREAD TOTAL`.
 
+In football terms, that rule picks out one kind of game: **the underdog is
+projected to score about 7 points or fewer.** At the 1.75 threshold the bias
+number and "underdog implied ≤ 7.00" select the identical set of games — see
+§4 for the measurement and for why the model still computes the bias rather
+than hardcoding the 7.
+
 How it has done, testing honestly on ten seasons of history (each season bet
 using a model that had only seen *earlier* seasons):
 
@@ -281,7 +287,38 @@ edge.
 ## 4. Which games qualify
 
 The bias number is driven almost entirely by the **underdog's expected
-score**. Qualifying games are big spread + low total:
+score** — at the betting threshold, entirely. In plain English the live rule
+is: **bet the over when the underdog is projected to score about 7 points or
+fewer.** That is not an approximation of the model, it is what the model
+selects. Measured over 12,372 games (2013–25):
+
+- `biasTotals = bias_fav + bias_dog`, but the favorite term is negligible.
+  Favorites sit at least 1.2σ above zero, where the censoring formula has
+  decayed to nothing: mean `bias_fav` is 0.02 vs 0.26 for `bias_dog`. The
+  underdog term supplies **92%** of the total, and correlates with it at
+  **+0.9965**.
+- Matched on sample size at the live threshold, the two selectors pick the
+  *same games*: `biasTotals > 1.75` gives N=227 at 63.44% over, and
+  `dog_est ≤ 7.00` gives N=227 at 63.44% over — **100% overlap**.
+
+So why keep the bias formula instead of hardcoding "dog ≤ 7"? Three reasons,
+and they matter more than the equivalence:
+
+1. **The cut re-calibrates itself.** `7.00` is a constant; the 1.75 threshold
+   is expressed in units derived from Tobit-estimated σ_dog (11.06 currently).
+   If scoring dispersion shifts, the implied dog-score cut moves with it. The
+   raw number would silently go stale.
+2. **They diverge outside the tail.** Overall corr(`biasTotals`, `dog_est`) is
+   −0.82, not −1.0, and `bias_fav` stops being negligible in the rare game
+   where *both* teams project near the floor.
+3. **It is the mechanism, not a proxy.** v3 showed the feature dominates raw
+   total and spread in and out of sample. `dog_est` is a correlated stand-in
+   that happens to coincide where you bet.
+
+Use the plain-English version to sanity-check a pick or explain the strategy;
+use `score_game.py` for the actual decision.
+
+Qualifying games are big spread + low total:
 
 ![Qualifying region](figs/qualify_region.png)
 

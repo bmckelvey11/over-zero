@@ -14,7 +14,8 @@ Pre-registered before running (see RESULTS.md for the same list):
   [C] Feature scan INSIDE the band. Candidate pool fixed up front from
       b4_features/INVENTORY.md (week, neutral_site, conference_game, home_dog)
       plus the two line-shape variables the model already knows (spread,
-      censoring bias). Every feature tested is reported, not just survivors.
+      censoring bias). Every feature tested is reported, not just survivors,
+      and every split family tiles its variable with no unreported middle.
   [D] Any cell clearing break-even goes through the repo's walk-forward
       protocol (train on seasons <= t-1, bet season t) - the discriminator
       between "found a cell" and "found an edge".
@@ -22,7 +23,10 @@ Pre-registered before running (see RESULTS.md for the same list):
 Break-even is 52.36%, measured from real consensus under prices in
 data/raw/actionnetwork_odds.csv (4,399 games, 2018/2019/2023-2025): books do
 NOT shade the under on high totals, median under price is -110 in every band.
-So the -110 hurdle is the right one, not an assumption.
+So the -110 hurdle is the right one, not an assumption. Note that price
+coverage is 5 of the 13 seasons tested; the hurdle is measured on those and
+extrapolated to the rest, which is safe here only because it is flat across
+every band and the band loses to it anyway.
 
 Run:  python research/b7_mid_total_under/test_mid_total_under.py
       python research/b7_mid_total_under/test_mid_total_under.py --selftest
@@ -55,11 +59,24 @@ BAND_LO, BAND_HI = 55.0, 65.0
 BREAK_EVEN = 0.5236  # measured, see module docstring
 
 # Comparison budget carried forward honestly. B6 documented 9 priors
-# (4 totals bins + 5 spread bins). B7 adds: 3 sub-bins + 1 aggregate + 6
-# feature splits = 10. A survivor must clear Bonferroni over all 19.
+# (4 totals bins + 5 spread bins). B7 adds 3 sub-bins + 1 aggregate + 13
+# feature cells = 17, counted as printed cells rather than split families so
+# the constant always matches the tables below (asserted in main()). A
+# survivor must clear Bonferroni over all 26.
 N_PRIOR_COMPARISONS = 9
-N_B7_COMPARISONS = 10
+N_B7_COMPARISONS = 17
 N_ALL_COMPARISONS = N_PRIOR_COMPARISONS + N_B7_COMPARISONS
+
+
+def load_neutral_site(season, raw_dir=RAW_DIR):
+    """game id -> neutralSite. lines_*.json has no venue field, so this comes
+    from games_*.json (same join pattern as b4_features/probit_features.py)."""
+    path = Path(raw_dir) / f"games_{season}.json"
+    if not path.exists():
+        return {}
+    return {g["id"]: 1.0 if g.get("neutralSite") else 0.0
+            for g in json.loads(path.read_text(encoding="utf-8"))
+            if g.get("id") is not None}
 
 
 def load_with_features(seasons=SEASONS, raw_dir=RAW_DIR):
@@ -78,6 +95,7 @@ def load_with_features(seasons=SEASONS, raw_dir=RAW_DIR):
         if not path.exists():
             print(f"  (no raw file for {season}: {path.name})")
             continue
+        neutral = load_neutral_site(season, raw_dir)
         for g in json.loads(path.read_text(encoding="utf-8")):
             hp, ap = g.get("homeScore"), g.get("awayScore")
             if hp is None or ap is None:
@@ -99,10 +117,7 @@ def load_with_features(seasons=SEASONS, raw_dir=RAW_DIR):
             cols["dog_pts"].append(dog)
             cols["season"].append(season)
             cols["week"].append(float(g.get("week") or 0))
-            # lines_*.json carries no venue field; neutral-site games are not
-            # separable here. Kept as a declared-but-unavailable candidate so
-            # the pre-registered list stays honest.
-            cols["neutral_site"].append(np.nan)
+            cols["neutral_site"].append(neutral.get(g.get("id"), np.nan))
             cols["conference_game"].append(
                 float(hc is not None and ac is not None and hc == ac))
             cols["home_dog"].append(float(spread > 0))
@@ -132,6 +147,10 @@ def walk_forward(under_win, season, sel):
     seasons <= t-1. The rule here has no fitted parameters beyond 'does the
     cell's prior-seasons rate clear break-even', so this tests whether the cell
     would ever have been bettable in real time.
+
+    Note this gate is deliberately GENEROUS to the hypothesis: it bets on the
+    prior-seasons point estimate clearing break-even, not on a Wilson lower
+    bound as monitor/ does. A cell that fails here fails the easy version.
     """
     seasons = np.unique(season)
     bets = wins = 0
@@ -177,9 +196,8 @@ def main():
 
     # Neighbours, for context on whether the band is a plateau or a slice.
     print()
-    for lo, hi, lab in ((0, 55, "<55 (below band)"), (65, 999, ">65 (above band)")):
-        s = (to > lo) & (to < hi) if lo == 0 else (to > lo)
-        s = (to < BAND_LO) if lo == 0 else (to > BAND_HI)
+    for lab, s in (("<55 (below band)", to < BAND_LO),
+                   (">65 (above band)", to > BAND_HI)):
         report_cell(lab, float(under_win[s].sum()), int(s.sum()))
 
     z, p = one_sided_p(rate_b, n_b)
@@ -187,7 +205,8 @@ def main():
     print(f"\n  55-65: {rate_b*100:.2f}% on N={n_b}")
     print(f"  vs break-even {BREAK_EVEN*100:.2f}%: z={z:+.2f}, one-sided p={p:.3f}")
     print(f"  Bonferroni over {N_ALL_COMPARISONS} comparisons "
-          f"(9 prior + 10 here): p_adj={min(1.0, p*N_ALL_COMPARISONS):.3f}")
+          f"({N_PRIOR_COMPARISONS} prior + {N_B7_COMPARISONS} here): "
+          f"p_adj={min(1.0, p*N_ALL_COMPARISONS):.3f}")
     print(f"  season block-bootstrap 95% CI: "
           f"[{boot[0]*100:.2f}%, {boot[1]*100:.2f}%]")
     print(f"  MDE at N={n_b} (80% power, one-sided 0.05): "
@@ -215,11 +234,19 @@ def main():
         ("non-conference",          band & (feats["conference_game"] == 0)),
         ("home dog",                band & (feats["home_dog"] == 1)),
         ("home favorite",           band & (feats["home_dog"] == 0)),
+        ("neutral site",            band & (feats["neutral_site"] == 1)),
+        ("non-neutral site",        band & (feats["neutral_site"] == 0)),
         ("spread <= 7 (close)",     band & (sp <= 7)),
+        ("spread 7-14 (middle)",    band & (sp > 7) & (sp <= 14)),
         ("spread > 14 (lopsided)",  band & (sp > 14)),
         ("censoring bias < 0.25",   band & (bias < 0.25)),
         ("censoring bias >= 0.25",  band & (bias >= 0.25)),
     ]
+    # Budget must equal what is actually printed: 3 sub-bins + 1 aggregate
+    # + every feature cell. Fails loudly rather than drifting silently.
+    assert N_B7_COMPARISONS == 4 + len(splits), (
+        f"comparison budget {N_B7_COMPARISONS} != 4 + {len(splits)} printed cells")
+
     print(f"  {'cell':>26} {'N':>6} {'under%':>8} {'95% CI':>14} {'vs BE':>9}")
     results = []
     for lab, s in splits:
@@ -228,9 +255,10 @@ def main():
         if n >= 200:
             results.append((lab, s, r, n))
 
-    if np.isnan(feats["neutral_site"]).all():
-        print("\n  neutral_site: DECLARED BUT UNAVAILABLE - lines_*.json has no "
-              "venue field. Not tested; not counted as a null.")
+    n_missing = int(np.isnan(feats["neutral_site"][band]).sum())
+    if n_missing:
+        print(f"\n  ({n_missing} band games unmatched in games_*.json, excluded "
+              f"from the neutral-site split only)")
 
     # --- [D] Walk-forward on anything that cleared --------------------------
     print("\n[D] Walk-forward on cells clearing break-even in-sample")
@@ -244,6 +272,24 @@ def main():
         print(f"  {lab}: in-sample {r*100:.2f}% (N={n}), raw p={p_c:.3f}, "
               f"p_adj={min(1.0, p_c*N_ALL_COMPARISONS):.3f}")
         print(f"    walk-forward: {wf}")
+        # A walk-forward rate means nothing without its own CI and its
+        # season-by-season spread: a single hot season can carry the average.
+        if n_wf >= 200:
+            r_wf = w_wf / n_wf
+            lo, hi = wilson_ci(w_wf, n_wf)
+            z_wf, p_wf = one_sided_p(r_wf, n_wf)
+            print(f"    walk-forward Wilson 95% CI [{lo*100:.2f}%, {hi*100:.2f}%], "
+                  f"z={z_wf:+.2f}, one-sided p={p_wf:.3f}")
+            per = []
+            for t in np.unique(season)[1:]:
+                prior = s & (season < t)
+                if prior.sum() < 100 or under_win[prior].mean() <= BREAK_EVEN:
+                    continue
+                cur = s & (season == t)
+                if cur.sum():
+                    per.append(f"{int(t)}:{under_win[cur].mean()*100:.0f}%"
+                               f"(n={int(cur.sum())})")
+            print(f"    per-season: {' '.join(per)}")
 
 
 def _selftest():

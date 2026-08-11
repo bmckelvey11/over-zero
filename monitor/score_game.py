@@ -8,8 +8,11 @@ matters); TOTAL is the game total, i.e. the standard combined over/under on
 both teams' points (not a team total). Trains the full pipeline (Tobit
 sigmas + probit) on every completed season in data/raw, then scores each
 (game spread, game total) pair. Betting rules per
-docs/MODEL_GUIDE.md: bet the over at bias > 1.0 (strong at > 1.75), at -110
-juice or better, using lines as close to closing as possible.
+docs/MODEL_GUIDE.md: bet the over at bias > 1.75, at -120 juice or better,
+using lines as close to closing as possible. Games at bias 1.00-1.75 print
+"pass (no edge)": walk-forward they win 52.80% (CI [48.2, 57.4]), which is
+indistinguishable from the 52.38% breakeven -- not shown to lose, just not
+shown to win. See monitor/bias_bins.py for the bin-by-bin evidence.
 """
 
 import argparse
@@ -65,13 +68,13 @@ def main():
         _, bias = censoring_bias(dog, fav, s1, s2)
         b = float(bias)
         p = float(probit.win_prob(b))
-        verdict = ("STRONG BET over" if b > 1.75 else
-                   "BET over" if b > 1.0 else "pass")
+        verdict = ("BET over" if b > 1.75 else
+                   "pass (no edge)" if b > 1.0 else "pass")
         print(f"  {sp:>7.1f} {total:>6.1f} {float(dog):>7.2f} {b:>6.2f} "
               f"{p*100:>7.2f}%  {verdict}")
-    print("\nRules: -110 or better on the over; closing-ish lines; full-game "
-          "COMBINED totals only\n(the standard game over/under -- not team "
-          "totals). See docs/MODEL_GUIDE.md.")
+    print("\nRules: bet only bias > 1.75; -120 or better on the over; "
+          "closing-ish lines;\nfull-game COMBINED totals only (the standard "
+          "game over/under -- not team totals).\nSee docs/MODEL_GUIDE.md.")
 
 
 if __name__ == "__main__":

@@ -15,8 +15,12 @@ betting playbook (filters, pricing, sizing, stop rules). Score a game with
 - **[v1/](v1/) — Floor Bias model** — frozen reference. Named for the mechanism:
   scores censored at the **floor** of 0 bias totals up → bet the over. Full
   recreation (Tobit, censoring bias, probit, Kelly), backtested on 13 seasons of
-  real CFBD data (2013–2025). Headline: bet the over when expected bias > 1.0 →
-  56.6% win over 680 bets. **Do not edit — this is the baseline.**
+  real CFBD data (2013–2025). Headline as originally published: bet the over
+  when expected bias > 1.0 → 56.6% win over 680 bets. **Do not edit — this is
+  the baseline.** Note the *operational* bet rule has since moved to
+  **bias > 1.75** (see [docs/MODEL_GUIDE.md](docs/MODEL_GUIDE.md) §3): the
+  1.00–1.75 band shows no demonstrated edge once the bins are made disjoint.
+  v1's code and numbers stay frozen as the reference implementation.
 
 - **[v2/](v2/)** — tightens two v1 caveats: analytic (OPG) standard errors in
   place of the BFGS approximation, and dropping the favorite/underdog error

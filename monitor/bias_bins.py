@@ -335,7 +335,7 @@ def main():
     print("    Compounding assumes every bet resizes off the running bankroll "
           "and that\n    bets settle sequentially; real slates overlap. "
           "MODEL_GUIDE demotes this\n    number for that reason -- treat "
-          "kellyROI%% per unit staked as the headline.")
+          "kellyROI% per unit staked as the headline.")
 
     if not args.no_fig:
         make_figure(bins, sweep, args.fig)

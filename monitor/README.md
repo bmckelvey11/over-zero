@@ -50,6 +50,11 @@ deployable protocol the k-fold tables can't certify. Two rules:
 - **A** (v1 headline rule): bet the over where expected censoring bias > 1.0.
 - **B** (k-fold rule): bet the over where trained-probit P(over) > 52.38%.
 
+Note: the *operational* bet rule moved to **bias > 1.75** on 2026-08-11 (see
+`bias_bins.py` and MODEL_GUIDE §3). These drivers deliberately keep 1.0 as
+their default — the wider bucket has more games and therefore more power to
+detect the signal decaying, which is a different question from where to bet.
+
 Result (2013–2025 data, first bet season 2016, run 2026-07-30):
 
 | rule | bets | win% | Wilson 95% | unit% | LR vs breakeven |

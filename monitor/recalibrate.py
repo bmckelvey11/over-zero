@@ -16,11 +16,13 @@ bias > 1.0 candidate set:
                 Rewards better sizing AND legitimately declining to bet.
   B             ROI per unit staked, reported with N staked and total stake --
                 uninterpretable alone, since not betting inflates it.
-  C (decomp)    Metric A recomputed with the STAKED SET FROZEN to whatever the
-                baseline staked. Isolates resizing from selection: gain that
-                survives C is real recalibration; gain that only appears in A
-                is "stop betting bias 1.00-1.75", which is a playbook change,
-                not a model change.
+  C (decomp)    Metric A restricted to games the BASELINE staked. Not a pure
+                resize metric: inside that set the recalibrated p can still
+                fall below breakeven and stake 0, which is selection. So C is
+                further decomposed at print time into (i) the resize-only
+                difference on games BOTH variants stake, and (ii) what dropping
+                the rest gained or cost. A pure "resize everything" Kelly
+                comparison is ill-defined -- for Kelly, a zero stake IS a size.
 
 Verdict rule, also pre-committed: implement only if the season-block bootstrap
 95% CI on the paired per-season profit difference (A) excludes 0 AND the
@@ -203,8 +205,21 @@ def main():
               f"{r['profit']:>+10.3f} {r['roi']*100:>+8.2f}%")
     print("  " + "-" * 70)
     print(f"  A  total profit       : {recal['profit'] - base['profit']:+.3f} u")
-    print(f"  C  frozen-set profit  : {frozen['profit'] - base['profit']:+.3f} u"
-          f"   <- resizing only, selection held fixed")
+    print(f"  C  baseline-set profit: {frozen['profit'] - base['profit']:+.3f} u"
+          f"   <- within the games the baseline staked")
+
+    # Decompose C: recal can still stake 0 inside the baseline set (that is
+    # selection, not sizing), so split it out explicitly.
+    fb, fr = base["f"], kelly_fraction(p_recal, KELLY_FRACTION)
+    both = (fb > 0) & (fr > 0)
+    dropped = (fb > 0) & (fr == 0)
+    resize_diff = (profit(over[both], fr[both])
+                   - profit(over[both], fb[both]))
+    drop_gain = -profit(over[dropped], fb[dropped])
+    print(f"     resize-only (both stake, n={int(both.sum())})   : "
+          f"{resize_diff:+.3f} u")
+    print(f"     de-selection inside C (n={int(dropped.sum())})  : "
+          f"{drop_gain:+.3f} u   (baseline profit forgone on dropped games)")
 
     # Paired per-season differences, for the block bootstrap.
     per_season, wins = [], 0
@@ -225,10 +240,10 @@ def main():
           f"season-block bootstrap 95% CI [{lo:+.3f}, {hi:+.3f}]")
 
     ci_excludes_0 = lo > 0 or hi < 0
-    resize_real = (frozen["profit"] - base["profit"]) > 0
+    resize_real = resize_diff > 0
     print("\n  VERDICT (rule pre-committed before results):")
     print(f"    CI excludes 0            : {ci_excludes_0}")
-    print(f"    gain survives frozen set : {resize_real}")
+    print(f"    resize-only gain > 0     : {resize_real}")
     if ci_excludes_0 and tot > 0 and resize_real:
         print("    => IMPLEMENT: recalibration sizes better out of sample.")
     else:

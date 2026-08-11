@@ -500,6 +500,10 @@ as perishable:
 # score today's games (the only command you need on gameday)
 python monitor/score_game.py SPREAD TOTAL [SPREAD TOTAL ...]
 
+# full pre-bet review of one game: verdict, price rules, sizing, line-move
+# sensitivity, and the checklist, in one printout
+python monitor/review_game.py SPREAD TOTAL [SPREAD TOTAL ...]
+
 # annual maintenance
 python monitor/run_walkforward.py            # honest-protocol backtest
 python monitor/run_monitor.py                # decay tables + trend test

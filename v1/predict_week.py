@@ -52,8 +52,9 @@ def main():
     ap.add_argument("--book", default="DraftKings",
                      help="sportsbook to read spread/total from (no consensus "
                           "book exists this far from kickoff)")
-    ap.add_argument("--hurdle", type=float, default=0.5238,
-                     help="break-even win-prob threshold for -110 pricing")
+    ap.add_argument("--threshold", type=float, default=1.75,
+                     help="bet rule: over when expected censoring bias > this "
+                          "(per MODEL_GUIDE; 1.00-1.75 shows no demonstrated edge)")
     args = ap.parse_args()
 
     spread_est, totals_est, fav_points, dog_points = load(
@@ -82,12 +83,12 @@ def main():
     print(f"{'home':<20} {'away':<20} {'total':>6} {'bias':>6} {'P(over)':>8} pick")
     picks = 0
     for r, bias, p in zip(rows, bias_totals, win_probs):
-        pick = "OVER" if p > args.hurdle else ""
+        pick = "OVER" if bias > args.threshold else ""
         if pick:
             picks += 1
         print(f"{r['home_team']:<20} {r['away_team']:<20} {r['total']:>6.1f} "
               f"{bias:>6.2f} {p*100:>7.2f}% {pick}")
-    print(f"\n{picks}/{len(rows)} games clear the {args.hurdle*100:.2f}% hurdle")
+    print(f"\n{picks}/{len(rows)} games clear bias > {args.threshold}")
 
 
 if __name__ == "__main__":

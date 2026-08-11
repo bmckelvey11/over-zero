@@ -6,17 +6,19 @@ place real bets. All numbers in this guide come from 12,493 real CFBD games,
 bet threshold revised to 1.75 on 2026-08-11).*
 
 > **What this is:** a research model with a documented, walk-forward-validated
-> edge on a specific, rare bet type. It is not a money printer: at ~23 bets a
-> season a losing year is a 15–35% event even if the edge is fully real, and
-> the edge can decay as books adapt. Bet only what you can afford to lose, at
-> legal books, and read [§8 Failure modes](#8-failure-modes--limits) before
-> staking anything.
+> edge on a specific, rare bet type. It is not a money printer: at a few dozen
+> bets a season a losing year is a 4–35% event (depending on volume and where
+> the true edge sits in its CI) even if the edge is fully real, and the edge
+> can decay as books adapt. Bet only what you can afford to lose, at legal
+> books, and read [§8 Failure modes](#8-failure-modes--limits) before staking
+> anything.
 
 > **Threshold changed 2026-08-11: bet above 1.75, not 1.0.** Breaking the
-> walk-forward results into *disjoint* bias bins showed the edge is not spread
-> across the old betting range — it is concentrated above 1.75. See
-> [§3 The evidence](#3-the-evidence). The old rule is not refuted, it is
-> diluted: it pooled a strong bin with a flat one.
+> walk-forward results into *disjoint* bias bins showed the win rate rising
+> smoothly with bias and clearing the profitability bar with margin only above
+> 1.75. See [§3 The evidence](#3-the-evidence). The old rule is not refuted,
+> it is diluted: it pooled bets that clear the bar with bets that can't be
+> shown to.
 
 ## TL;DR
 
@@ -170,19 +172,32 @@ Only the top two bins clear breakeven on their Wilson lower bound. The
 1.00–1.75 bin — 447 bets, ~45 per season, the bulk of the old rule's volume —
 returns +0.8% per unit with a CI straddling breakeven. **That is "no
 demonstrated edge," not "a losing zone":** its interval reaches 57.4%, so it
-is not shown to lose, merely not shown to win. Excluding it is a decision to
-skip bets that have not earned their place, not a claim they are traps.
+is not shown to lose, merely not shown to win. And the test is weaker than it
+reads: at N=447 the minimum detectable edge (80% power) is a **59.0%** win
+rate — the old rule's 56.8% headline edge would itself be invisible in this
+bin. Excluding it is a *profitability-bar* decision — don't bet where an edge
+can't be shown — not a finding that no edge exists. Demonstrating even the
+old edge here would take ~1,000 mid-band bets in total, ~12 more seasons.
 
-Finer slicing confirms the step is at 1.75 and not an artifact of where the
-bin edges fall: 1.00–1.25 wins 52.56%, 1.25–1.50 wins 53.52%, 1.50–1.75 wins
-52.22%, then 1.75–2.00 jumps to 67.57%.
-
-**The honest caveat: there is no mechanism story for a step.** Censoring
-theory predicts the edge rising *smoothly* with bias — a discontinuity at
-1.75 is not something the model predicts, and the slices bracketing it are
-thin (1.50–1.75 is 90 bets, 1.75–2.00 is 74). The step could be real
-structure the linear probit cannot express, or it could be sampling noise in
-a thin tail. Ten seasons cannot separate those.
+**There is no step at 1.75 — the rate rises smoothly, and 1.75 is where it
+clears the bar.** The finer slices (52.6% → 53.5% → 52.2% → 67.6%) look like
+a cliff, but a specification test says otherwise: probit
+`over ~ bias + 1{bias>1.75}` on all 10,255 walk-forward games with
+season-clustered SEs gives a strong smooth slope (+0.155, p < 0.0001) and a
+step coefficient indistinguishable from zero (+0.083, **p = 0.54**). The
+slices bracketing 1.75 are 74–215 bets each — noise territory. This is what
+censoring theory predicts (a smooth rise), so read 1.75 as the point where
+the estimated win rate clears the profitability bar with margin, not where
+the mechanism changes. Two robustness results survive season-block
+bootstrapping (which respects that bets within a season share a fitted
+model): the >1.75 win rate CI is [58.1, 71.6] clustered (vs Wilson's
+[58.2, 70.4]), and the >1.75 minus 1.00–1.75 difference is +11.7pp with CI
+[+2.5, +21.4] — it excludes zero. Selection inflation from picking 1.75 off
+the sweep is ~+1.2pp (season-resampled argmax bootstrap), already covered by
+sizing on the CI lower bound. One number to watch rather than worry about:
+2025, the most recent and largest test season (51 bets), was also the
+weakest at 52.9% — within noise at that N (±7pp), but it is the pattern the
+decay monitor exists to catch, so re-run the monitor after 2026.
 
 **Corroboration, not independent evidence.** A walk-forward recalibration of
 the probit ([`monitor/recalibrate.py`](../monitor/recalibrate.py)) also
@@ -257,8 +272,10 @@ upward.** Worked examples (verify any of these with `score_game.py`):
 In practice these are games like a ranked team hosting an overmatched
 opponent with a defensive profile, service-academy/triple-option matchups
 with low totals, and weather-suppressed lines with big favorites. About
-**2.3%** of all lined games qualify at bias > 1.75 — roughly **23 bets per
-season** (2013–2017 had thinner CFBD line coverage, hence fewer). The old
+**2.3%** of all lined games qualify at bias > 1.75 over the full backtest —
+a ~23/season average, but that mean is dragged down by thin early CFBD line
+coverage. Recent seasons run **~30–50 qualifying bets** (2022: 37, 2023: 40,
+2024: 30, 2025: 51); plan volume on that, not the 10-season mean. The old
 1.0 rule qualified 6.6%, about 68 per season.
 
 ## 5. The betting playbook
@@ -388,15 +405,17 @@ closing-type numbers, which means:
 
 ### What to expect (variance, in advance)
 
-- **Fewer bets means a much noisier season.** At ~23 bets/season the standard
-  deviation of the season win rate is **±10.0 pp**, nearly double the ±5.5 pp
-  the old ~80-bet rule carried. Variance is the price of the tighter filter;
-  the annual *expectation* is nearly unchanged, the year-to-year spread is not.
-- Expected season at flat 1u stakes, bias > 1.75: **~23 bets, ~+5.4u**
-  (long-run average ≈ +23% of turnover), with a realistic range of about
-  −2u to +13u (5th–95th percentile).
-- **A losing season happens ~15% of the time** if the true edge is the
-  walk-forward 64.53% — but **~35% of the time** at the 58.2% CI lower bound,
+- **Fewer bets means a noisier season.** At recent volume (~40 bets/season)
+  the standard deviation of the season win rate is **±7.8 pp**, vs ±5.5 pp for
+  the old ~80-bet rule; at the 10-season-average 23 bets it is ±10 pp.
+  Variance is the price of the tighter filter; the annual *expectation* is
+  nearly unchanged, the year-to-year spread is not.
+- Expected season at flat 1u stakes, bias > 1.75: the 2016–2025 average was
+  **~+5.4u/season** (≈ +23% of turnover); at recent ~30–50 bet volume the
+  same per-bet edge implies roughly +7–12u, with single seasons ranging from
+  small losses to ~2× the mean.
+- **A losing season happens ~4–15% of the time** at the walk-forward 64.53%
+  (recent vs historical volume) — but **~19–35% of the time** at the 58.2% CI lower bound,
   where you should be planning. Two losing seasons in a row is unremarkable
   and is not by itself evidence the edge is gone; see the stop rules below.
 - Total profit barely changed by tightening: over 2016–2025 the 1.75 filter
@@ -418,9 +437,9 @@ perishable:
 - **Stop** when a trailing 3-season window shows both `SLOPE~0` and a win% CI
   centered at/below breakeven. As of 2025 data: no decay (trend +0.006/yr,
   p = 0.55; every window since 2016 has a positive significant slope).
-- **Do not read your own bet results as decay.** At ~23 bets/season a losing
-  year is a 15–35% event ([§5](#5-the-betting-playbook)), so even two bad
-  seasons carry almost no information. The monitor's slope test uses all
+- **Do not read your own bet results as decay.** At a few dozen bets/season a
+  losing year is a 4–35% event ([§5](#5-the-betting-playbook)), so even two
+  bad seasons carry almost no information. The monitor's slope test uses all
   lined games, not just your bets, which is why it is the decay instrument
   and your P&L is not.
 - **The monitor deliberately still tracks the bias > 1.0 bucket.** `monitor.py`
@@ -466,7 +485,7 @@ Data comes from this repo's local `data/` folder
 | Number | lowest total on the board; 0.5 pt ≈ 5 cents of juice; never buy the hook |
 | Timing | day-of/close (validated protocol); earlier OK if the number qualifies — log CLV |
 | Sizing | flat 1%, or ¼-Kelly **off the 58.2% CI lower bound ≈ 3%** — *not* the 6.4% that the 64.53% point estimate implies |
-| Volume | ~23 bets/season (2.3% of lined games) |
+| Volume | ~30–50 bets/season recently (2.3% of lined games; 10-season mean 23) |
 | Validated edge | 64.53% [58.2, 70.4], walk-forward 2016–2025 |
 | Kill switch | trailing 3-season slope ≈ 0 with win% at/below breakeven |
 
@@ -490,16 +509,17 @@ Data comes from this repo's local `data/` folder
 - **Compounded-return claims are upper bounds.** Sequential Kelly compounding
   is impossible on simultaneous slates; the flat-stake returns are the real
   numbers.
-- **The 1.75 threshold is tuned to this data, and the step has no theory
-  behind it.** The old 1.0 came from the paper and never touched these ten
-  seasons; 1.75 is where a sweep on these seasons peaks, and censoring theory
-  predicts a smooth rise, not a cliff. If the step is sampling noise in a thin
-  tail (1.50–1.75 is 90 bets, 1.75–2.00 is 74), the true threshold is lower
-  and this rule leaves money on the table — the safer failure direction, but a
-  real one. The first genuinely out-of-sample test is the 2026 season.
+- **The 1.75 threshold is tuned to this data.** The old 1.0 came from the
+  paper and never touched these ten seasons; 1.75 is where a sweep on these
+  seasons peaks. Since the underlying rise is smooth (§3), the true
+  bar-crossing point could sit below 1.75 — in which case this rule leaves
+  money on the table (the safer failure direction) — or the smooth curve
+  could be flatter than these seasons suggest, in which case 1.75's margin
+  shrinks. Selection inflation is measured at ~+1.2pp; plan on the CI lower
+  bound. The first genuinely out-of-sample test is the 2026 season.
 - **This is research, not financial advice.** Sports betting is
   negative-expectation for almost everyone; even a 12 pp edge, if it persists,
-  is volatile at ~23 bets a year. Legality depends on your jurisdiction.
+  is volatile at a few dozen bets a year. Legality depends on your jurisdiction.
 
 ## 9. Next steps
 

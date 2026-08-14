@@ -18,6 +18,7 @@ from run_on_project_data import DEFAULT_CSV, load
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_OUT_CSV = REPO / "data" / "processed" / "predictions.csv"
+CFBD_LINES_URL = "https://api.collegefootballdata.com/lines"
 CSV_COLUMNS = [
     "run_at", "source", "book", "game_id", "game_date", "week",
     "home_team", "away_team", "spread", "total", "dog_implied",
@@ -51,6 +52,40 @@ def load_future_lines(path, book):
     return rows
 
 
+def _cfbd_token():
+    """CFBD API token from env vars or the repo's env.env (gitignored)."""
+    import os
+    for key in ("CFBD_API_KEY", "CFBD-API", "BEARER_TOKEN"):
+        if os.environ.get(key):
+            return os.environ[key]
+    env = REPO / "env.env"
+    if env.exists():
+        for line in env.read_text(encoding="utf-8").splitlines():
+            if "=" in line:
+                k, v = line.split("=", 1)
+                if k.strip() in ("CFBD_API_KEY", "CFBD-API", "BEARER_TOKEN"):
+                    return v.strip()
+    raise SystemExit("CFBD token not found (env var CFBD_API_KEY / CFBD-API "
+                     "or a line in env.env)")
+
+
+def fetch_lines(season, week, out_path):
+    """Pull current lines (played or not) from the CFBD REST API for one
+    season, keep the requested week, write the snapshot to out_path."""
+    import urllib.request
+    req = urllib.request.Request(
+        f"{CFBD_LINES_URL}?year={season}&seasonType=regular",
+        headers={"Authorization": f"Bearer {_cfbd_token()}"})
+    data = json.load(urllib.request.urlopen(req, timeout=60))
+    keep = [g for g in data if g.get("week") == week]
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(keep, indent=1), encoding="utf-8")
+    print(f"Fetched {len(keep)} week-{week} games ({len(data)} total "
+          f"{season} records) -> {out_path.name}")
+    return out_path
+
+
 def append_csv(path, rows, run_at, source, book, dog_est, bias_totals,
                win_probs, threshold):
     """Append one row per scored game. Reruns accumulate, so the file doubles
@@ -81,8 +116,17 @@ def main():
     ap.add_argument("--fit-csv", default=str(DEFAULT_CSV))
     ap.add_argument("--fit-seasons", type=int, nargs="+", required=True,
                      help="historical seasons to fit the pipeline on")
-    ap.add_argument("--raw", required=True,
-                     help="path to lines_{...}.json for the target week (unplayed)")
+    ap.add_argument("--raw", default=None,
+                     help="path to lines_{...}.json for the target week; "
+                          "required unless --fetch")
+    ap.add_argument("--fetch", action="store_true",
+                     help="pull current lines from the CFBD API first "
+                          "(token from env.env), write them to --raw "
+                          "(default data/raw/lines_{season}_week{week}.json), "
+                          "then score")
+    ap.add_argument("--season", type=int, default=2026,
+                     help="season for --fetch")
+    ap.add_argument("--week", type=int, default=1, help="week for --fetch")
     ap.add_argument("--book", default="DraftKings",
                      help="sportsbook to read spread/total from (no consensus "
                           "book exists this far from kickoff)")
@@ -93,6 +137,13 @@ def main():
                      help="append every scored game to this CSV "
                           "(--csv '' to disable)")
     args = ap.parse_args()
+
+    if args.fetch:
+        raw = args.raw or str(REPO / "data" / "raw" /
+                              f"lines_{args.season}_week{args.week}.json")
+        args.raw = str(fetch_lines(args.season, args.week, raw))
+    elif not args.raw:
+        ap.error("--raw is required unless --fetch is given")
 
     spread_est, totals_est, fav_points, dog_points = load(
         Path(args.fit_csv), args.fit_seasons

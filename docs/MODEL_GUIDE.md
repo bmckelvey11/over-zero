@@ -650,12 +650,21 @@ ready or trivial. That's why they rank first.
 
 ### C. Engineering conveniences
 
-- **`score_week.py`**: pull the week's lines from the CFBD API
-  automatically, score every game, print the qualifying list — removes the
-  manual number entry from the weekly routine.
+- ~~`score_week.py`~~ **Done** — `predict_week.py --fetch` pulls the week's
+  current lines from the CFBD API, scores every game, prints the qualifying
+  list, and appends everything to `data/processed/predictions.csv`:
+
+  ```bash
+  python v1/predict_week.py --fetch --season 2026 --week 1 --book Bovada \
+      --fit-seasons 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025
+  ```
+
+  Rerun it as often as you like — each run appends timestamped rows, so the
+  CSV accumulates the line-move history per game for free.
 - **Bet-log template + CLV summarizer**: a standard CSV header, plus a small
   script reporting your average price, average closing-line value, and
-  actual-vs-expected win rate.
+  actual-vs-expected win rate. (`predictions.csv` already captures the
+  model side; this adds the *your-bets* side.)
 - **Season-maintenance checklist** in [monitor/README.md](../monitor/README.md)
   so the annual re-run is a copy-paste ritual, not memory.
 

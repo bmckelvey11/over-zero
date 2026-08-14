@@ -6,7 +6,9 @@ Run:  python v1/predict_week.py --fit-seasons 2015 2016 ... 2025 \
 """
 
 import argparse
+import csv
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +17,12 @@ from censoring_bias import censoring_bias, fit_pipeline, implied_team_points
 from run_on_project_data import DEFAULT_CSV, load
 
 REPO = Path(__file__).resolve().parents[1]
+DEFAULT_OUT_CSV = REPO / "data" / "processed" / "predictions.csv"
+CSV_COLUMNS = [
+    "run_at", "source", "book", "game_id", "game_date", "week",
+    "home_team", "away_team", "spread", "total", "dog_implied",
+    "bias", "p_over", "threshold", "pick",
+]
 
 
 def load_future_lines(path, book):
@@ -33,12 +41,38 @@ def load_future_lines(path, book):
             continue
         rows.append({
             "game_id": g.get("id"),
+            "game_date": (g.get("startDate") or "")[:10],
+            "week": g.get("week"),
             "home_team": g.get("homeTeam"),
             "away_team": g.get("awayTeam"),
             "spread": float(spread),   # home-relative, neg = home favored
             "total": float(total),
         })
     return rows
+
+
+def append_csv(path, rows, run_at, source, book, dog_est, bias_totals,
+               win_probs, threshold):
+    """Append one row per scored game. Reruns accumulate, so the file doubles
+    as a line-move history: same game_id, later run_at, new numbers."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new_file = not path.exists()
+    with path.open("a", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
+        if new_file:
+            w.writeheader()
+        for r, d, b, p in zip(rows, dog_est, bias_totals, win_probs):
+            w.writerow({
+                "run_at": run_at, "source": source, "book": book,
+                "game_id": r["game_id"], "game_date": r["game_date"],
+                "week": r["week"], "home_team": r["home_team"],
+                "away_team": r["away_team"], "spread": r["spread"],
+                "total": r["total"], "dog_implied": round(float(d), 2),
+                "bias": round(float(b), 3), "p_over": round(float(p), 4),
+                "threshold": threshold,
+                "pick": "OVER" if b > threshold else "",
+            })
 
 
 def main():
@@ -55,6 +89,9 @@ def main():
     ap.add_argument("--threshold", type=float, default=1.75,
                      help="bet rule: over when expected censoring bias > this "
                           "(per MODEL_GUIDE; 1.00-1.75 shows no demonstrated edge)")
+    ap.add_argument("--csv", default=str(DEFAULT_OUT_CSV),
+                     help="append every scored game to this CSV "
+                          "(--csv '' to disable)")
     args = ap.parse_args()
 
     spread_est, totals_est, fav_points, dog_points = load(
@@ -89,6 +126,12 @@ def main():
         print(f"{r['home_team']:<20} {r['away_team']:<20} {r['total']:>6.1f} "
               f"{bias:>6.2f} {p*100:>7.2f}% {pick}")
     print(f"\n{picks}/{len(rows)} games clear bias > {args.threshold}")
+
+    if args.csv:
+        run_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        append_csv(args.csv, rows, run_at, Path(args.raw).name, args.book,
+                   dog_est, bias_totals, win_probs, args.threshold)
+        print(f"Appended {len(rows)} rows to {args.csv}")
 
 
 if __name__ == "__main__":

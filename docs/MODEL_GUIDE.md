@@ -118,7 +118,8 @@ That lopsidedness means the *actual average* score of a weak team is a
 little **higher** than the line implies — the impossible negative games get
 replaced by zeros, which pulls the average up. Statisticians call this
 *censoring bias*; we call it the **floor effect**, and it can be computed
-exactly (the formula is in the figure above). With the score-to-score
+exactly (the formula is in the figure above; full derivation in
+[§11 Appendix](#11-appendix--the-mathematics)). With the score-to-score
 randomness measured in this data (about ±11 points per team), the effect is
 worth about **1 point** for a team expected to score 10, and essentially
 **zero** for a team expected to score 25+.
@@ -174,7 +175,8 @@ probability column.**
 
 Only the two betting lines go in. No team ratings, no weather, no injuries —
 that's the point: this is a mispricing you can compute from the odds board
-itself.
+itself. Every formula in this table is derived in
+[§11 Appendix](#11-appendix--the-mathematics).
 
 ## 3. The evidence
 
@@ -725,6 +727,169 @@ resolve it.
    extreme-tempo teams plausibly differ, which would change their bias at
    the same implied score. Per-team estimates might re-rank borderline
    bets — with the usual overfitting risks.
+
+## 11. Appendix — the mathematics
+
+Everything above is readable without this section. This is the full chain of
+formulas for readers who want to verify the model or re-derive it, in the
+order the pipeline runs them, with the code location for each. Notation:
+φ is the standard normal density ("bell curve height"), Φ is its cumulative
+distribution ("area to the left"), and Φ⁻¹ its inverse.
+
+### 11.1 Implied team points
+
+The spread `S` (favorite's margin, > 0) and total `T` are two equations in
+two unknowns — the market's expected score for each team:
+
+```
+dog + fav = T          dogPointEst = (T − S) / 2
+fav − dog = S    ⇒     favPointEst = dogPointEst + S
+```
+
+Code: `implied_team_points` ([v2/models_v2.py](../v2/models_v2.py)). Paper
+Eqs. 6–7.
+
+### 11.2 The censored-normal bias (the floor effect)
+
+Model a team's latent score as `X* ~ N(μ, σ²)` — the score it "deserves" —
+but observe `X = max(0, X*)`. The mean of the observed score is a standard
+censored-normal result. Splitting the expectation at zero, with `z = μ/σ`:
+
+```
+E[X] = E[X* · 1{X*>0}]  +  0 · P(X* ≤ 0)
+     = μ·Φ(z) + σ·φ(z)
+```
+
+(the second line uses `E[X*·1{X*>0}] = μΦ(z) + σφ(z)`, integration by parts
+on the normal density). Subtract the latent mean:
+
+```
+bias(μ, σ) = E[X] − μ = μΦ(z) + σφ(z) − μ
+           = σ·φ(μ/σ) − μ·Φ(−μ/σ)   ≥ 0
+```
+
+using `Φ(z) − 1 = −Φ(−z)`. Properties that drive everything in this guide:
+the bias is always positive, decreasing in μ, and dies exponentially — with
+σ ≈ 11 it is **1.09 points at μ = 10** and **0.016 points at μ = 31** (those
+two numbers sum to the 1.11 in §4's 21/41 worked example). Code:
+`_team_censor_bias` / `censoring_bias`. Paper Eqs. 12–13, footnote 4.
+
+Per game, the two teams' biases combine:
+
+```
+biasTotals = bias(dog) + bias(fav)      (adds — the over edge)
+biasSpread = bias(fav) − bias(dog)      (mostly cancels — no spread edge)
+```
+
+`biasTotals` is a sum of two *marginal* expectations, so it is **invariant
+to any correlation between the two teams' score errors** — v2 verified this
+both algebraically and empirically (measured ρ̂ = +0.07 changes nothing).
+Correlation only affects the *variance* of the total, i.e. the win
+probability for a given bias, not the bias itself.
+
+### 11.3 Estimating σ: the left-censored Tobit
+
+The bias formula needs each role's score noise σ. Ordinary least squares on
+observed scores is biased *by the very effect we're modeling* (the zeros
+pull the fitted line), so σ comes from a Type-1 Tobit maximum likelihood:
+
+```
+log L = Σ_uncensored [ log φ((yᵢ − μᵢ)/σ) − log σ ]
+      + Σ_censored   [ log Φ((0 − μᵢ)/σ) ]
+```
+
+with `μᵢ = α + β·(implied points)ᵢ`, parameterized in `log σ` so σ stays
+positive. Uncensored games contribute a density term; games where the team
+scored 0 contribute the *probability of being at or below the floor*.
+Fitted on 12,493 games: **σ_dog = 11.03, σ_fav = 11.78** (paper:
+11.28/11.94), α ≈ 0, β ≈ 1 — the lines are unbiased apart from the floor.
+Code: `tobit_left_censored_v2`, with analytic gradients and OPG standard
+errors. Paper Eqs. 10–11.
+
+### 11.4 The probit and its breakeven
+
+The map from bias to win probability is a probit fit on realized outcomes
+(pushes dropped so the outcome is binary):
+
+```
+P(over wins | bias) = Φ(c + m·bias)        fitted: c = −0.073, m = +0.176
+```
+
+The bias at which this crosses any required win rate `q`:
+
+```
+bias* = (Φ⁻¹(q) − c) / m       q = 0.5238 ⇒ bias* ≈ 0.75
+```
+
+That 0.75 is the *curve's* breakeven — the bet rule sits at 1.75 instead
+because the curve is miscalibrated in the 1.00–1.75 band (§3). Code:
+`probit_win_v2`; season-clustered standard errors per the audit. Paper
+Eq. 14.
+
+### 11.5 Betting arithmetic
+
+**Breakeven win rate at price −P** (risk P to win 100):
+
+```
+breakeven = P / (P + 100)      −110 → 110/210 = 52.38%;  −120 → 54.55%
+```
+
+**Value of a point of total.** The totals forecast error has σ_T ≈ 16.3
+points, so nudging the line by one point near its center moves the win
+probability by approximately the normal density at the center:
+
+```
+ΔP ≈ φ(0)/σ_T = 0.399/16.3 ≈ 2.45 pp per point,  ~1.2 pp per half-point
+```
+
+Setting 1.2 pp of win rate against the ~1.1 pp of breakeven that 5 cents of
+juice costs gives the guide's exchange rate: **half a point ≈ 5 cents**.
+
+**Kelly staking.** With net odds `b = 100/110` and win probability `p`:
+
+```
+f* = (b·p − (1−p)) / b         p = 0.582 → f* ≈ 12.2%;  p = 0.6453 → 25.5%
+```
+
+Quarter-Kelly divides by 4 (→ ~3% at the planning number). The guide sizes
+off 0.582, not 0.6453: Kelly is aggressively sensitive to overstated p, and
+the point estimate is both selection-inflated (§2) and miscalibrated (§3).
+Code: `kelly_fraction` ([monitor/bias_bins.py](../monitor/bias_bins.py)),
+`kelly_bankroll_roi` ([v2/models_v2.py](../v2/models_v2.py)).
+
+### 11.6 The uncertainty machinery
+
+**Wilson 95% interval** (every "95% range" in this guide), for `w` wins in
+`n` bets with `p̂ = w/n`, `z = 1.96`:
+
+```
+center = (p̂ + z²/2n) / (1 + z²/n)
+half   = z·√(p̂(1−p̂)/n + z²/4n²) / (1 + z²/n)
+```
+
+Preferred over the naive `p̂ ± z√(p̂(1−p̂)/n)` because it stays inside [0,1]
+and behaves at small n. Code: `_wilson` ([monitor/monitor.py](../monitor/monitor.py)).
+
+**Season-block bootstrap** (the "stricter accounting" of §3): bets within a
+season share one fitted model and one scoring environment, so instead of
+resampling bets, whole *seasons* are resampled with replacement (10,000
+draws) and the statistic recomputed per draw. Code:
+`monitor/recalibrate.py` and the audit scripts.
+
+**Minimum detectable effect** (§3's "the sample is too small"): the win
+rate `p₁` a test of size n can distinguish from breakeven `p₀` at 5%
+two-sided significance and 80% power solves
+
+```
+p₁ − p₀ = (1.96·√(p₀(1−p₀)) + 0.84·√(p₁(1−p₁))) / √n
+```
+
+n = 447 → p₁ ≈ 59.0%; inverting for p₁ = 56.8% gives n ≈ 1,000.
+
+**Walk-forward protocol** (every "honest test"): for each test season t,
+the entire pipeline — Tobit σs *and* probit — is refit on seasons < t only;
+season t is then bet blind. No future information enters any fitted
+quantity. Code: `fit_train` ([monitor/run_walkforward.py](../monitor/run_walkforward.py)).
 
 ---
 

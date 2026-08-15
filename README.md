@@ -10,6 +10,53 @@ with figures: how the model works, the evidence, which games qualify, and the
 betting playbook (filters, pricing, sizing, stop rules). Score a game with
 `python monitor/score_game.py SPREAD TOTAL`.
 
+## The strategy, for visitors
+
+**The idea in one paragraph.** A football team cannot score fewer than zero
+points. When a huge underdog is expected to score only ~5–8 points, its bad
+days all get truncated to 0 while its good days run free — so its *actual*
+average score sits slightly above what the betting lines imply. Both teams'
+truncation effects add up in the game total, which means in exactly these
+games (big spread, low total) the real combined score beats the posted
+over/under more often than the market prices. Bookmakers' lines don't
+correct for this; the model computes the size of the effect — the "bias
+number", in points — directly from the spread and total on the board.
+
+**The rule.** Bet the **over** on the full-game total when the bias number
+exceeds **1.75**, at −120 or better. Quick screen: `(total − spread) / 2 ≤
+~7.5` — the underdog's implied score. In practice: MAC paycheck road games,
+FCS mismatches, service-academy matchups. About 2% of games qualify, ~30–50
+bets a season.
+
+**The evidence, honestly stated.** Walk-forward backtest (each season bet by
+a model trained only on earlier seasons, 2016–2025): **64.5% win rate over
+234 bets**, 95% range 58.2–70.4, against a 52.38% break-even. Plan on the
+~58% lower bound — the threshold was partly chosen on this data, and the
+point estimate is inflated by that selection. The band just below (bias
+1.00–1.75) shows no demonstrable edge and is excluded. Nine of ten test
+seasons profitable; no decay detected through 2025; the mirror-image "under"
+edge was tested and refuted. Full audit trail — including the negative
+results — is in the guide and `monitor/`.
+
+**Try it:**
+
+```bash
+pip install -r requirements.txt
+python monitor/score_game.py 28 40.5        # spread 28, total 40.5 -> full verdict
+python monitor/review_game.py 28 40.5       # verdict + prices, sizing, sensitivity
+python monitor/bias_bins.py                 # reproduce the threshold evidence
+```
+
+Live-line scoring (`v1/predict_week.py --fetch`) needs a free
+[CFBD](https://collegefootballdata.com/) API key in `env.env`
+(`CFBD-API = <key>`).
+
+**This is research, not financial advice.** A few dozen bets a year, a
+losing season 4–35% of the time even if the edge is fully real, and the edge
+may fade as books adapt — it is published research (and now a public repo).
+Read [§8 Failure modes](docs/MODEL_GUIDE.md#8-failure-modes--limits) before
+staking anything, and bet only what you can afford to lose where it's legal.
+
 ## Versions
 
 - **[v1/](v1/) — Floor Bias model** — frozen reference. Named for the mechanism:
